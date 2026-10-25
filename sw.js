@@ -2,13 +2,16 @@
    La page et les icônes sont gardées sur l'appareil. À chaque ouverture avec réseau,
    la dernière version est prise si elle arrive vite ; sinon la copie gardée s'ouvre tout de suite.
    Les échanges avec Google (données) ne passent pas par ici : l'appli les gère elle-même. */
-var CACHE = 'anziama-v1';
-var FICHIERS = ['./', 'index.html', 'manifest.webmanifest', 'icons/icon-192.png', 'icons/icon-512.png',
-                'icons/icon-maskable-512.png', 'icons/apple-touch-icon.png'];
+var CACHE = 'anziama-v2';
+var FICHIERS = ['./', 'index.html', 'manifest.webmanifest', 'icon-192.png', 'icon-512.png',
+                'icon-maskable-512.png', 'apple-touch-icon.png'];
 var ATTENTE_MAX = 3000;   // au-delà, on ouvre la copie gardée (connexion lente)
 
 self.addEventListener('install', function (e) {
-  e.waitUntil(caches.open(CACHE).then(function (c) { return c.addAll(FICHIERS); }).then(function () { return self.skipWaiting(); }));
+  // Un fichier manquant ne doit pas empêcher le reste de fonctionner sans réseau
+  e.waitUntil(caches.open(CACHE).then(function (c) {
+    return Promise.all(FICHIERS.map(function (f) { return c.add(f).catch(function () {}); }));
+  }).then(function () { return self.skipWaiting(); }));
 });
 
 self.addEventListener('activate', function (e) {

@@ -11,8 +11,8 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Anziama">
-<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
-<link rel="icon" type="image/png" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" href="icon-192.png">
 <title>Complexe Anziama — Gestion locative</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link id="polices" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -325,11 +325,14 @@ label.ch .aide{font-weight:400;color:var(--pale);font-size:12.5px}
   table.t tr.z td,table.t tr.grp td,table.t tr.tot td,.calcul .l.final{-webkit-print-color-adjust:exact;print-color-adjust:exact}
   @page{margin:12mm}
 }
+/* Appli installée sur iPhone : la barre de l'heure est par-dessus la page, on laisse sa place */
+.main{padding-top:calc(16px + env(safe-area-inset-top))}
+body::before{content:"";position:fixed;top:0;left:0;right:0;height:env(safe-area-inset-top);z-index:60;background:color-mix(in srgb,var(--nuit) 82%,transparent);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);pointer-events:none}
 @media (max-width:1100px){.g4{grid-template-columns:repeat(2,minmax(0,1fr))}.mois-detail{grid-template-columns:1fr}}
 @media (max-width:860px){
   .app{grid-template-columns:1fr}
   .side{display:none}
-  .main{padding:10px 14px calc(100px + env(safe-area-inset-bottom))}
+  .main{padding:calc(10px + env(safe-area-inset-top)) 14px calc(100px + env(safe-area-inset-bottom))}
   .barre .marque-mob{display:flex}
   .barre .txt-btn{display:none}
   .barre button{min-height:42px;min-width:42px;justify-content:center}
@@ -350,7 +353,7 @@ label.ch .aide{font-weight:400;color:var(--pale);font-size:12.5px}
   .liste-locaux{grid-template-columns:1fr}
   .liste-locaux button{padding:10px 12px;font-size:14px}
   .voile{padding:0;align-items:flex-end}
-  .fenetre,.fenetre.large{width:100%;border-radius:20px 20px 0 0;max-height:94vh;display:flex;flex-direction:column}
+  .fenetre,.fenetre.large{width:100%;border-radius:20px 20px 0 0;max-height:calc(94vh - env(safe-area-inset-top));display:flex;flex-direction:column}
   .fenetre .corps{max-height:none;flex:1;overflow:auto;padding:16px}
   .fenetre .pieds{padding:12px 16px calc(12px + env(safe-area-inset-bottom))}
   .fenetre .pieds .btn{flex:1 1 auto}

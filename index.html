@@ -225,6 +225,12 @@ table.t tr.detail[hidden]{display:none}
 /* Formulaires */
 .champs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px 16px}
 .champs .plein{grid-column:1/-1}
+/* Préfinancement : une ligne par type de travaux (type, devis, versé, retirer) */
+.pl-ligne{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1fr) minmax(0,1fr) 40px;gap:8px;align-items:end;padding:10px 0;border-bottom:1px solid var(--trait2)}
+.pl-ligne .pl-autre{grid-column:1/4}
+.pl-ligne .pl-x{height:42px;width:40px;padding:0;justify-content:center}
+.pl-ajout{margin-top:10px}
+@media (max-width:700px){.pl-ligne{grid-template-columns:minmax(0,1fr) minmax(0,1fr) 40px}.pl-ligne .pl-type{grid-column:1/-1}.pl-ligne .pl-autre{grid-column:1/-1}}
 label.ch{display:flex;flex-direction:column;gap:5px;font-size:13.5px;color:var(--doux);font-weight:500}
 label.ch input,label.ch select,label.ch textarea,.filtre select,.filtre input,.mini-champ{border:1px solid var(--champ-bord);border-radius:10px;padding:10px 11px;background:var(--champ);color:var(--texte);font-size:15px;min-width:0}
 select option{background:#fff;color:#18202E}
@@ -532,6 +538,7 @@ table.t .m-c{display:none}
   table.t.rel tr.grp td .sub{color:#D9BD7E;font-weight:500;font-size:12.5px}
   table.t.rel tr.nonpaye td{background:var(--ko-fond)}
   table.t.rel tr.tot td{background:var(--or-pale);font-weight:700;white-space:normal!important}
+  table.t.rel tr.tot td.d{white-space:nowrap!important;text-align:right}
   table.t.rel td .muet-mob{display:block;font-size:11.5px;color:var(--pale);font-weight:400}
 }
 /* Téléphone : moins de blocs, infos en colonnes */
@@ -615,7 +622,7 @@ table.t .m-c{display:none}
 /* =========================================================
    Liaison avec Google Sheets
    ========================================================= */
-var VERSION_ATTENDUE='2.5';
+var VERSION_ATTENDUE='2.6';
 /* Appli installée (PC et téléphone) : elle n'est pas ouverte depuis Google, elle parle à Google par internet
    avec l'adresse de l'appli et le code secret, gardés sur cet appareil. */
 var APPLI_INSTALLEE=!(window.google&&google.script&&google.script.run);
@@ -1460,9 +1467,9 @@ VUES.locataires=function(){
   var h=entete('Locataires et baux','Chaque bail relie un locataire à un local. Les anciens locataires restent consultables.','<button class="btn prim" onclick="ouvrirBail()">'+ico('plus')+'Nouveau locataire</button><button class="btn" onclick="ouvrirSortie()">'+ico('sortie')+'Sortie d\'un locataire</button>');
   h+='<div class="filtres"><div class="onglets">'+[['actifs','Actuels'],['anciens','Anciens'],['tous','Tous']].map(function(x){return '<button class="'+(F.filtre===x[0]?'on':'')+'" onclick="V.loc.filtre=\''+x[0]+'\';rendre()">'+x[1]+'</button>'}).join('')+'</div>'+
     '<div class="filtre"><input id="rechLoc" placeholder="Rechercher un nom, un numéro…" value="'+esc(F.q)+'" oninput="V.loc.q=this.value;clearTimeout(window._tq);window._tq=setTimeout(function(){rendre();var i=document.getElementById(\'rechLoc\');i.focus();i.setSelectionRange(i.value.length,i.value.length)},300)"></div></div>';
-  h+='<div class="tab-wrap"><table class="t'+(estTel()?' rel':'')+'"><thead><tr><th class="x-mob">Bail</th><th>Local</th><th>Locataire</th><th class="x-mob">Téléphone</th><th class="x-mob">Entrée</th><th class="x-mob">Sortie</th><th class="d">Loyer</th><th class="d">Reste dû</th><th class="d x-mob">Garantie initiale</th><th class="d x-mob">Garantie en caisse</th><th class="d x-mob">Si départ aujourd\'hui</th><th class="x-mob">Ponctualité</th><th class="x-mob">Contrat</th></tr></thead><tbody>'+
-    liste.map(function(b,i){var s=ST[b.id];return '<tr class="cliq'+(i%2?' z':'')+'" onclick="ouvrirFicheBail(\''+b.id+'\')"><td class="x-mob">'+b.id+attenteIco(b)+'</td><td><b>'+b.local+'</b></td><td><div class="ell">'+esc(nomBail(b))+'</div>'+(s.avance.length?' <span class="pastille p-bleu x-mob">Payé d\'avance</span>':'')+(b.gerant?'<div class="muet x-mob" style="font-size:12.5px">Gérant : '+esc(b.gerant)+'</div>':'')+'</td><td class="x-mob">'+esc(b.telephone)+'</td><td class="x-mob">'+fd(b.debut)+'</td><td class="x-mob">'+fd(b.fin)+'</td><td class="d">'+loyerAff(b)+'</td><td class="d'+(s.dette>0?' neg':'')+'">'+usd(s.dette)+'</td><td class="d x-mob">'+usd(s.g.versee+s.g.comp)+'</td><td class="d x-mob">'+usd(s.g.solde)+'</td><td class="d x-mob">'+apresDettes(s)+'</td><td class="x-mob">'+ponctLib(s.ponct)+'</td><td class="x-mob">'+(b.dateContrat?'<span class="pastille p-ok">Signé</span>':'<span class="pastille p-gris">À signer</span>')+'</td></tr>'}).join('')+
-    (liste.length?'':'<tr><td colspan="13" class="vide" style="white-space:normal!important">Aucun locataire ne correspond.</td></tr>')+'</tbody></table></div>';
+  h+='<div class="tab-wrap"><table class="t'+(estTel()?' rel':'')+'"><thead><tr><th class="x-mob">Bail</th><th>Local</th><th>Locataire</th><th class="x-mob">Téléphone</th><th class="x-mob">Entrée</th><th class="x-mob">Sortie</th><th class="d">Loyer</th><th class="d">Reste dû</th><th class="x-mob">Ponctualité</th><th class="x-mob">Contrat</th></tr></thead><tbody>'+
+    liste.map(function(b,i){var s=ST[b.id];return '<tr class="cliq'+(i%2?' z':'')+'" onclick="ouvrirFicheBail(\''+b.id+'\')"><td class="x-mob">'+b.id+attenteIco(b)+'</td><td><b>'+b.local+'</b></td><td><div class="ell">'+esc(nomBail(b))+'</div>'+(s.avance.length?' <span class="pastille p-bleu x-mob">Payé d\'avance</span>':'')+(b.gerant?'<div class="muet x-mob" style="font-size:12.5px">Gérant : '+esc(b.gerant)+'</div>':'')+'</td><td class="x-mob">'+esc(b.telephone)+'</td><td class="x-mob">'+fd(b.debut)+'</td><td class="x-mob">'+fd(b.fin)+'</td><td class="d">'+loyerAff(b)+'</td><td class="d'+(s.dette>0?' neg':'')+'">'+usd(s.dette)+'</td><td class="x-mob">'+ponctLib(s.ponct)+'</td><td class="x-mob">'+(b.dateContrat?'<span class="pastille p-ok">Signé</span>':'<span class="pastille p-gris">À signer</span>')+'</td></tr>'}).join('')+
+    (liste.length?'':'<tr><td colspan="10" class="vide" style="white-space:normal!important">Aucun locataire ne correspond.</td></tr>')+'</tbody></table></div>';
   var mc=mk(TODAY()),reds=(D.reductions||[]).filter(function(r){var b=bail(r.bail);return b&&b.statut==='Actif'&&(!mk(r.au)||mk(r.au)>=mc)}).sort(function(a,b){return a.local.localeCompare(b.local)});
   if(reds.length)h+='<div class="carte mt"><h2>Réductions de loyer en cours ou à venir</h2><div class="tab-wrap"><table class="t rel"><thead><tr><th>Local</th><th>Locataire</th><th>Période</th><th class="d">Loyer réduit</th><th class="d x-mob">Au contrat</th></tr></thead><tbody>'+
     reds.map(function(r,i){var b=bail(r.bail);return '<tr class="cliq'+(i%2?' z':'')+'" onclick="ouvrirFicheBail(\''+b.id+'\')"><td><b>'+b.local+'</b></td><td><div class="ell">'+esc(nomBail(b))+'</div></td><td>'+periodeRed(r)+'</td><td class="d"><b>'+mont(r.loyer,b.devise)+'</b></td><td class="d x-mob">'+mont(b.loyer,b.devise)+'</td></tr>'}).join('')+'</tbody></table></div></div>';
@@ -1491,7 +1498,7 @@ function ouvrirFicheBail(id){
   if(s.prefs.length||b.statut==='Actif'){
     c+='<h3>Travaux préfinancés par le locataire</h3>';
     if(s.prefs.length)c+='<div class="tab-wrap" style="margin-bottom:16px"><table class="t'+(estTel()?' rel':'')+'"><thead><tr><th>Travaux</th><th class="d x-mob">Versé</th><th class="d">Retenue / mois</th><th class="x-mob">Depuis</th><th class="d x-mob">Déjà retenu</th><th class="d">Reste</th><th>Loyer normal dès</th></tr></thead><tbody>'+
-      s.prefs.map(function(x,i){return '<tr class="cliq'+(i%2?' z':'')+'" onclick="ouvrirPref(\''+x.p.id+'\')"><td><div class="ell">'+esc(prefLib(x.p))+'</div></td><td class="d x-mob">'+usd(x.p.total)+'</td><td class="d">'+usd(x.p.deduction)+'</td><td class="x-mob">'+mLib(mk(x.p.premierMois))+'</td><td class="d x-mob">'+usd(x.deduit)+'</td><td class="d"><b>'+usd(x.reste)+'</b></td><td>'+prefFinAff(x)+'</td></tr>'}).join('')+'</tbody></table></div>';
+      s.prefs.map(function(x,i){return '<tr class="cliq'+(i%2?' z':'')+'" onclick="ouvrirPref(\''+x.p.id+'\')"><td><div class="ell">'+esc(prefLib(x.p))+'</div></td><td class="d x-mob">'+usd(n2(x.p.verse)||x.p.total)+'</td><td class="d">'+usd(x.p.deduction)+'</td><td class="x-mob">'+mLib(mk(x.p.premierMois))+'</td><td class="d x-mob">'+usd(x.deduit)+'</td><td class="d"><b>'+usd(x.reste)+'</b></td><td>'+prefFinAff(x)+'</td></tr>'}).join('')+'</tbody></table></div>';
     else c+='<p class="muet" style="margin:0 0 16px">Aucun. Si le locataire a avancé l\'argent d\'un achat (une cuve, une réparation…) remboursé par une déduction sur le loyer, ajoute-le ici.</p>';
   }
   if(s.reds.length||b.statut==='Actif'){
@@ -1527,19 +1534,44 @@ function cartePrefs(){
   if(!L.length)return h+'<div class="vide" style="padding:16px">Aucun préfinancement noté pour l\'instant.</div></div>';
   var tel=estTel();
   return h+'<div class="tab-wrap"><table class="t'+(estTel()?' rel':'')+'"><thead><tr><th>Local</th><th class="x-mob">Locataire</th><th>Travaux</th><th class="d x-mob">Devis</th><th class="d x-mob">Versé</th><th class="d x-mob">Retenue / mois</th><th class="d x-mob">Déjà retenu</th><th class="d">Reste</th><th>'+(tel?'Normal dès':'Loyer normal dès')+'</th></tr></thead><tbody>'+
-    L.map(function(o,i){var x=o.x;return '<tr class="cliq'+(i%2?' z':'')+'" onclick="ouvrirPref(\''+x.p.id+'\')"><td><b>'+o.b.local+'</b></td><td class="x-mob"><div class="ell">'+esc(nomBail(o.b))+'</div></td><td><div class="ell"'+(tel?' style="max-width:110px"':'')+'>'+esc(prefLib(x.p))+'</div>'+(x.p.nature&&x.p.objet?'<div class="muet x-mob" style="font-size:12.5px">'+esc(x.p.objet)+'</div>':'')+'</td><td class="d x-mob">'+(n2(x.p.devis)?usd(x.p.devis):'<span class="muet">—</span>')+'</td><td class="d x-mob">'+usd(x.p.total)+'</td><td class="d x-mob">'+usd(x.p.deduction)+'</td><td class="d x-mob">'+usd(x.deduit)+'</td><td class="d"><b>'+usd(x.reste)+'</b></td><td>'+prefFinAff(x,tel)+'</td></tr>'}).join('')+'</tbody></table></div></div>';
+    L.map(function(o,i){var x=o.x;return '<tr class="cliq'+(i%2?' z':'')+'" onclick="ouvrirPref(\''+x.p.id+'\')"><td><b>'+o.b.local+'</b></td><td class="x-mob"><div class="ell">'+esc(nomBail(o.b))+'</div></td><td><div class="ell"'+(tel?' style="max-width:110px"':'')+'>'+esc(prefLib(x.p))+'</div>'+(x.p.nature&&x.p.objet?'<div class="muet x-mob" style="font-size:12.5px">'+esc(x.p.objet)+'</div>':'')+'</td><td class="d x-mob">'+(n2(x.p.devis)?usd(x.p.devis):'<span class="muet">—</span>')+'</td><td class="d x-mob">'+usd(n2(x.p.verse)||x.p.total)+(n2(x.p.compense)?'<div class="muet" style="font-size:12px">dont '+usdTxt(x.p.compense)+' compensés</div>':'')+'</td><td class="d x-mob">'+usd(x.p.deduction)+'</td><td class="d x-mob">'+usd(x.deduit)+'</td><td class="d"><b>'+usd(x.reste)+'</b></td><td>'+prefFinAff(x,tel)+'</td></tr>'}).join('')+'</tbody></table></div></div>';
+}
+/** Lignes de travaux d'un préfinancement. Rangées dans le tableur sous la forme « Type = devis / versé ; … ». */
+function prefLignes(p){
+  var L=String(p.lignes||'').split(' ; ').map(function(t){var m=/^(.*) = ([\d.]*) \/ ([\d.]*)$/.exec(t.trim());return m?{type:m[1],devis:m[2],verse:m[3]}:null}).filter(Boolean);
+  if(!L.length&&(p.nature||p.objet||p.total))L=[{type:p.nature||'',devis:n2(p.devis)?p.devis:'',verse:n2(p.verse)||n2(p.total)?String(n2(p.verse)||n2(p.total)):''}];
+  return L;
+}
+function prefLigneHtml(l){
+  var autre=l.type&&TYPES_TRAVAUX.indexOf(l.type)<0;
+  return '<div class="pl-ligne"><label class="ch pl-type">Type de travaux<select class="t-type" onchange="prefApercu()"><option value="">— Choisir —</option>'+TYPES_TRAVAUX.map(function(t){return '<option'+(l.type===t?' selected':'')+'>'+esc(t)+'</option>'}).join('')+'<option value="__autre"'+(autre?' selected':'')+'>Autre (à écrire)</option></select></label>'+
+    '<label class="ch pl-autre"'+(autre?'':' style="display:none"')+'>Quels travaux ?<input class="t-autre" value="'+(autre?esc(l.type):'')+'" placeholder="Ex. : toiture, peinture façade…"></label>'+
+    '<label class="ch">Devis ($)<input class="t-devis" type="number" inputmode="decimal" step="0.01" min="0" value="'+esc(l.devis||'')+'" placeholder="—"></label>'+
+    '<label class="ch">Versé ($)<input class="t-verse" type="number" inputmode="decimal" step="0.01" min="0" value="'+esc(l.verse||'')+'"></label>'+
+    '<button type="button" class="btn pl-x" title="Retirer cette ligne" aria-label="Retirer cette ligne" onclick="prefRetirer(this)">×</button></div>';
+}
+function prefAjouter(){var z=document.getElementById('prefLignes');z.insertAdjacentHTML('beforeend',prefLigneHtml({}));ameliorer(z);prefApercu();}
+function prefRetirer(b){var z=document.getElementById('prefLignes');if(z.children.length<2){toast('Il faut au moins un type de travaux.',1);return}b.closest('.pl-ligne').remove();prefApercu();}
+/** Lit les lignes du formulaire (type choisi ou écrit, devis, versé). */
+function prefLire(){
+  return Array.prototype.map.call(document.querySelectorAll('#prefLignes .pl-ligne'),function(d){
+    var sel=d.querySelector('.t-type').value,autre=d.querySelector('.t-autre');
+    d.querySelector('.pl-autre').style.display=sel==='__autre'?'':'none';
+    var type=(sel==='__autre'?autre.value.trim():sel).replace(/[=;\/]/g,'-');
+    return {type:type,devis:n2(d.querySelector('.t-devis').value),verse:n2(d.querySelector('.t-verse').value),choisi:!!sel};
+  });
 }
 function ouvrirPref(id,bid){
-  var p=id?D.prefinancements.find(function(x){return x.id===id}):{id:'',bail:bid,local:(bail(bid)||{}).local,nature:'',objet:'',devis:'',total:'',deduction:'',premierMois:mk(TODAY())+'-01',date:TODAY(),notes:''};
-  var autre=p.nature&&TYPES_TRAVAUX.indexOf(p.nature)<0;
-  fenetre(id?'Préfinancement '+id:'Nouveau préfinancement de travaux','<p style="margin-top:0;color:var(--doux)">Le locataire a payé des travaux du local. Chaque mois, une somme est retenue sur son loyer jusqu\'à ce que ce qu\'il a versé lui soit rendu. Le calcul se met à jour pendant que tu remplis.</p><form id="fPref" data-id="'+(id||'')+'" oninput="prefApercu()" onsubmit="prefValider(event,\''+(id||'')+'\')"><div class="champs">'+
-    '<label class="ch plein">Locataire<select name="bail" onchange="prefApercu()">'+optsBaux(p.bail)+'</select></label>'+
-    '<label class="ch">Type de travaux<select name="nature" required onchange="prefApercu()"><option value="">— Choisir —</option>'+TYPES_TRAVAUX.map(function(t){return '<option'+(p.nature===t?' selected':'')+'>'+esc(t)+'</option>'}).join('')+'<option value="__autre"'+(autre?' selected':'')+'>Autre (à écrire)</option></select></label>'+
-    '<label class="ch" id="chAutre"'+(autre?'':' style="display:none"')+'>Quels travaux ?<input name="natureAutre" value="'+(autre?esc(p.nature):'')+'" placeholder="Ex. : toiture, peinture façade…"></label>'+
-    '<label class="ch plein">Précisions (facultatif)<input name="objet" value="'+esc(p.objet)+'" placeholder="Ex. : carrelage de la boutique, 12 m²"></label>'+
-    '<label class="ch">Devis proposé (USD)<input type="number" inputmode="decimal" step="0.01" min="0" name="devis" value="'+esc(n2(p.devis)?p.devis:'')+'" placeholder="Facultatif"></label>'+
-    '<label class="ch">Versé par le locataire (USD)<input type="number" inputmode="decimal" step="0.01" min="0.01" name="total" value="'+esc(p.total)+'" required></label>'+
-    '<label class="ch">Retenue sur le loyer, par mois (USD)<input type="number" inputmode="decimal" step="0.01" min="0.01" name="deduction" value="'+esc(p.deduction)+'" required></label>'+
+  var p=id?D.prefinancements.find(function(x){return x.id===id}):{id:'',bail:bid,local:(bail(bid)||{}).local,nature:'',objet:'',devis:'',total:'',compense:'',deduction:'',premierMois:mk(TODAY())+'-01',date:TODAY(),notes:''};
+  var L=prefLignes(p);if(!L.length)L=[{}];
+  fenetre(id?'Préfinancement '+id:'Nouveau préfinancement de travaux','<p style="margin-top:0;color:var(--doux)">Le locataire a payé des travaux du local. Chaque mois, une somme est retenue sur son loyer jusqu\'à ce que ce qu\'il a versé lui soit rendu. Mets une ligne par type de travaux : l\'appli fait les totaux.</p><form id="fPref" data-id="'+(id||'')+'" oninput="prefApercu()" onsubmit="prefValider(event,\''+(id||'')+'\')"><div class="champs">'+
+    '<label class="ch plein">Locataire<select name="bail" onchange="prefApercu()">'+optsBaux(p.bail)+'</select></label></div>'+
+    '<h3 style="margin:16px 0 0">Travaux</h3><div id="prefLignes">'+L.map(prefLigneHtml).join('')+'</div>'+
+    '<button type="button" class="btn pl-ajout" onclick="prefAjouter()">'+ico('plus')+'Ajouter un type de travaux</button>'+
+    '<div class="champs" style="margin-top:16px">'+
+    '<label class="ch plein">Précisions (facultatif)<input name="objet" value="'+esc(p.objet)+'" placeholder="Ex. : 2 devis électriques, le 1er prestataire a dû être remplacé"></label>'+
+    '<label class="ch plein">Déjà compensé sur une somme qu\'il te devait ($)<input type="number" inputmode="decimal" step="0.01" min="0" name="compense" value="'+esc(n2(p.compense)?p.compense:'')+'" placeholder="Ex. : reste de garantie non payé"><span class="aide">Cette somme ne lui est pas rendue sur les loyers.</span></label>'+
+    '<label class="ch">Retenue sur le loyer, par mois ($)<input type="number" inputmode="decimal" step="0.01" min="0.01" name="deduction" value="'+esc(p.deduction)+'" required></label>'+
     '<label class="ch">Première retenue<input type="month" name="premierMois" value="'+mk(p.premierMois)+'" required></label>'+
     '<label class="ch">Date du versement<input type="date" name="date" value="'+esc(p.date)+'"></label>'+
     '<label class="ch plein">Notes<input name="notes" value="'+esc(p.notes)+'"></label></div>'+
@@ -1548,14 +1580,19 @@ function ouvrirPref(id,bid){
     (id?'<button class="btn danger gauche" onclick="supprimer(\'Prefinancements\',\''+id+'\',\'ce préfinancement\')">Supprimer</button>':'')+'<button class="btn" onclick="fermer()">Annuler</button><button class="btn prim" onclick="document.getElementById(\'fPref\').requestSubmit()">Enregistrer</button>');
   prefApercu();
 }
-/** Calcul affiché sous le formulaire : durée, déjà retenu, reste, retour au loyer normal. */
+/** Calcul affiché sous le formulaire : totaux, durée, déjà retenu, reste, retour au loyer normal. */
 function prefApercu(){
   var f=document.getElementById('fPref'),z=document.getElementById('prefCalcul');if(!f||!z)return;
-  document.getElementById('chAutre').style.display=f.nature.value==='__autre'?'':'none';
-  f.natureAutre.required=f.nature.value==='__autre';
-  var b=bail(f.bail.value),tot=n2(f.total.value),per=n2(f.deduction.value),devis=n2(f.devis.value),m0=f.premierMois.value;
+  var L=prefLire(),verse=r2(L.reduce(function(t,l){return t+l.verse},0)),devis=r2(L.reduce(function(t,l){return t+l.devis},0));
+  var comp=n2(f.compense.value),tot=r2(verse-comp),b=bail(f.bail.value),per=n2(f.deduction.value),m0=f.premierMois.value;
   var l=function(a,v,cl){return '<div class="l'+(cl?' '+cl:'')+'"><span>'+a+'</span><span class="m">'+v+'</span></div>'};
-  if(!(tot>0&&per>0&&m0)){z.innerHTML=l('Remplis le montant versé, la retenue par mois et le premier mois','');return;}
+  var h='';
+  if(L.length>1)h+=L.map(function(x){return l(esc(x.type||'(type à choisir)'),usd(x.verse)+(x.devis&&Math.abs(x.devis-x.verse)>0.009?' <span class="muet" style="font-size:12.5px">(devis '+usdTxt(x.devis)+')</span>':''))}).join('');
+  if(devis)h+=l('Total des devis',usd(devis));
+  h+=l('Total versé par le locataire',usd(verse),L.length>1?'s':'');
+  if(devis&&Math.abs(devis-verse)>0.009)h+=l(verse<devis?'Pas encore versé sur les devis':'Versé en plus des devis',usd(Math.abs(r2(devis-verse))));
+  if(comp)h+=l('Déjà compensé (somme qu\'il te devait)','− '+usd(comp))+l('À lui rendre sur les loyers',usd(Math.max(0,tot)),'s');
+  if(!(tot>0&&per>0&&m0)){z.innerHTML=h+l(tot<-0.009?'<span class="neg">C\'est lui qui te doit '+usdTxt(-tot)+'</span>':'Remplis les montants, la retenue par mois et le premier mois','');return;}
   var tel=estTel(),ml=function(m){return tel?moisCourt(m):mLib(m)};
   var loyer=b?loyerUSD(b):0,n=Math.ceil(r2(tot/per)),dernierM=addM(m0,n-1),dernierV=r2(tot-per*(n-1));
   /* Même calcul que la fiche du locataire et les relevés : seuls les mois déjà facturés comptent comme retenus. */
@@ -1563,10 +1600,7 @@ function prefApercu(){
   if(b){var tmp={id:'__apercu',bail:b.id,local:b.local,total:tot,deduction:per,premierMois:m0+'-01'},av=D.prefinancements;
     D.prefinancements=av.filter(function(x){return x.id!==id}).concat([tmp]);
     try{var x=calculBail(b).prefs.find(function(y){return y.p===tmp});if(x){deja=x.deduit;if(x.reste>0.009)dernierM=x.finPrevue;}}finally{D.prefinancements=av}}
-  var reste=r2(tot-deja),restants=reste>0.009?Math.ceil(r2(reste/per)):0,h='';
-  if(devis)h+=l('Devis proposé',usd(devis));
-  h+=l('Versé par le locataire',usd(tot));
-  if(devis&&Math.abs(devis-tot)>0.009)h+=l(tot<devis?'Pas encore versé sur le devis':'Versé en plus du devis',usd(Math.abs(r2(devis-tot))));
+  var reste=r2(tot-deja),restants=reste>0.009?Math.ceil(r2(reste/per)):0;
   if(b)h+=l('Loyer normal',usd(loyer))+l('Pendant les retenues, il paie',usd(Math.max(0,r2(loyer-per)))+' / mois');
   h+=l('Durée',n+' mois ('+ml(m0)+' → '+ml(dernierM)+')');
   if(Math.abs(dernierV-per)>0.009)h+=l('Dernière retenue',usd(dernierV));
@@ -1576,10 +1610,16 @@ function prefApercu(){
   if(b&&per>loyer+0.009)h+=l('<span class="neg">Attention : la retenue dépasse le loyer</span>','');
   z.innerHTML=h;
 }
-function prefValider(ev,id){ev.preventDefault();var f=ev.target,b=bail(f.bail.value);
-  var nature=f.nature.value==='__autre'?f.natureAutre.value.trim():f.nature.value;
-  if(!nature){toast('Choisis ou écris le type de travaux.',1);return;}
-  enregistrer('Prefinancements',{id:id,bail:b.id,local:b.local,nature:nature,objet:f.objet.value.trim(),devis:f.devis.value===''?'':n2(f.devis.value),total:n2(f.total.value),deduction:n2(f.deduction.value),premierMois:f.premierMois.value+'-01',date:f.date.value,notes:f.notes.value},'Préfinancement enregistré','Préfinancement — '+b.local+' — '+nature);}
+function prefValider(ev,id){ev.preventDefault();var f=ev.target,b=bail(f.bail.value),L=prefLire();
+  if(L.some(function(l){return !l.type}))return toast('Choisis ou écris le type de chaque ligne de travaux.',1);
+  var verse=r2(L.reduce(function(t,l){return t+l.verse},0)),devis=r2(L.reduce(function(t,l){return t+l.devis},0)),comp=n2(f.compense.value),tot=r2(verse-comp);
+  if(!(verse>0))return toast('Indique ce que le locataire a versé.',1);
+  if(!(tot>0))return toast('Rien à lui rendre : ce qu\'il a versé est entièrement compensé.',1);
+  var nature=L.map(function(l){return l.type}).filter(function(t,i,a){return a.indexOf(t)===i}).join(' + ');
+  enregistrer('Prefinancements',{id:id,bail:b.id,local:b.local,nature:nature,objet:f.objet.value.trim(),
+    lignes:L.map(function(l){return l.type+' = '+(l.devis||'')+' / '+l.verse}).join(' ; '),
+    devis:devis||'',verse:verse,compense:comp||'',total:tot,deduction:n2(f.deduction.value),premierMois:f.premierMois.value+'-01',date:f.date.value,notes:f.notes.value},
+    'Préfinancement enregistré','Préfinancement — '+b.local+' — '+nature);}
 function facturerReparation(id){var b=bail(id);
   fenetre('Facturer une réparation','<p style="margin-top:0;color:var(--doux)">Une réparation ou un dégât à la charge de '+esc(nomBail(b))+'. Le montant s\'ajoute à ce qu\'il doit, jusqu\'à ce qu\'il le rembourse.</p><form id="fRep" onsubmit="repValider(event,\''+id+'\')"><div class="champs"><label class="ch plein">Quelle réparation ?<input name="objet" required placeholder="Ex. : vitre cassée"></label><label class="ch">Montant (USD)<input type="number" inputmode="decimal" step="0.01" name="montant" required></label><label class="ch">Date<input type="date" name="date" value="'+TODAY()+'"></label></div></form>',
     '<button class="btn" onclick="fermer()">Annuler</button><button class="btn prim" onclick="document.getElementById(\'fRep\').requestSubmit()">Enregistrer</button>');}
@@ -1712,21 +1752,29 @@ function imprimerSortie(){
     '<div class="signatures"><span>Signature du bailleur</span><span>Signature du locataire</span></div>'+docPied());
 }
 
-/* ---------- Garanties (3 colonnes inchangées) ---------- */
+/* ---------- Garanties ---------- */
 VUES.garanties=function(){
-  var liste=D.baux.slice().sort(function(a,b){return (a.statut==='Actif'?0:1)-(b.statut==='Actif'?0:1)||a.local.localeCompare(b.local)});
-  var tot={v:0,p:0,s:0};
-  var h=entete('Garanties','Ce que chaque locataire a versé, ce qui a été pris dessus, et ce qu\'il reste à lui rendre.');
-  h+='<div class="tab-wrap"><table class="t'+(estTel()?' rel':'')+'"><thead><tr><th>Local</th><th class="x-mob">Bail</th><th>Locataire</th><th class="x-mob">Statut</th><th class="d x-mob">Garantie initiale</th><th class="d x-mob">Prise pour loyers</th><th class="d x-mob">Retenues</th><th class="d x-mob">Rendue</th><th class="d">En caisse</th><th class="d x-mob">Reste dû</th><th class="d x-mob">Si départ aujourd\'hui</th><th>État</th></tr></thead><tbody>'+
-    liste.map(function(b,i){var g=ST[b.id].g,et;
-      if(b.statut!=='Actif')et=g.solde>0.009?'<span class="pastille p-or">À rendre '+usd(g.solde)+'</span>':'<span class="pastille p-gris">Réglée</span>';
-      else et=g.versee&&g.solde<g.versee*0.5?'<span class="pastille p-att">À reconstituer</span>':'<span class="pastille p-ok">En ordre</span>';
-      if(b.statut!=='Actif'&&g.solde>0.009&&estTel())et='<span class="pastille p-or">À rendre</span>';
-      if(b.statut==='Actif'){tot.v+=g.versee+g.comp;tot.p+=g.prel;tot.s+=g.solde;}
-      return '<tr class="cliq'+(i%2?' z':'')+'" onclick="'+(b.statut==='Actif'?'ouvrirFicheBail':'ouvrirSortie')+'(\''+b.id+'\')"><td><b>'+b.local+'</b></td><td class="x-mob">'+b.id+'</td><td><div class="ell">'+esc(nomBail(b))+'</div>'+(b.statut==='Actif'?'':'<div class="muet m-c" style="font-size:12px">parti le '+fd(b.fin)+'</div>')+'</td><td class="x-mob">'+(b.statut==='Actif'?'Actuel':'Parti le '+fd(b.fin))+'</td><td class="d x-mob">'+usd(g.versee+g.comp)+'</td><td class="d x-mob">'+usd(g.prel)+'</td><td class="d x-mob">'+usd(g.ret)+'</td><td class="d x-mob">'+usd(g.remb)+'</td><td class="d"><b>'+usd(g.solde)+'</b></td><td class="d x-mob'+(ST[b.id].dette>0?' neg':'')+'">'+usd(ST[b.id].dette)+'</td><td class="d x-mob">'+apresDettes(ST[b.id])+'</td><td>'+et+'</td></tr>';}).join('')+
-    '<tr class="tot x-mob"><td colspan="4">Locataires actuels</td><td class="d">'+usd(tot.v)+'</td><td class="d">'+usd(tot.p)+'</td><td></td><td></td><td class="d">'+usd(tot.s)+'</td><td></td><td></td><td></td></tr>'+
-    '<tr class="tot seul-mob"><td colspan="2">Locataires actuels</td><td class="d">'+usd(tot.s)+'</td><td></td></tr></tbody></table></div>';
-  h+='<p style="color:var(--doux-page,var(--doux));font-size:14px;margin-top:12px">« En caisse » : ce qu\'il reste de la garantie aujourd\'hui. « Si départ aujourd\'hui » : la garantie en caisse moins ce que le locataire doit encore. Les retenues sont les sommes gardées sur la garantie au départ d\'un locataire pour des dégâts ou des réparations.</p>';
+  /* L'argent des garanties : ce que tu détiens pour les locataires actuels, puis ce que tu dois encore rendre aux anciens */
+  var tel=estTel(),parLocal=function(a,b){return a.local.localeCompare(b.local)};
+  var actifs=D.baux.filter(function(b){return b.statut==='Actif'}).sort(parLocal);
+  var anciens=D.baux.filter(function(b){return b.statut!=='Actif'}).sort(function(a,b){return String(b.fin||'').localeCompare(String(a.fin||''))});
+  var aRendre=anciens.filter(function(b){return ST[b.id].g.solde>0.009}),reglees=anciens.filter(function(b){return ST[b.id].g.solde<=0.009});
+  var tA=actifs.reduce(function(t,b){return t+ST[b.id].g.solde},0),tR=aRendre.reduce(function(t,b){return t+ST[b.id].g.solde},0);
+  var h=entete('Garanties','L\'argent des garanties : ce que tu gardes pour les locataires actuels, et ce que tu dois encore rendre aux anciens.');
+  h+='<div class="grille g2"><div class="carte chiffre"><div class="lib">Garanties détenues (locataires actuels)</div><div class="val num">'+usd(tA)+'</div><div class="sous">'+actifs.length+' locataires</div></div>'+
+    '<div class="carte chiffre'+(tR?' rouge':'')+'"><div class="lib">À rendre aux anciens locataires</div><div class="val num">'+usd(tR)+'</div><div class="sous">'+(aRendre.length?aRendre.length+' ancien'+(aRendre.length>1?'s':'')+' locataire'+(aRendre.length>1?'s':''):'rien à rendre')+'</div></div></div>';
+  /* Locataires actuels */
+  h+='<div class="carte mt"><h2>Locataires actuels</h2><div class="tab-wrap"><table class="t'+(tel?' rel':'')+'"><thead><tr><th>Local</th><th>Locataire</th><th class="d x-mob">Versée</th><th class="d x-mob">Prise pour loyers</th><th class="d">En caisse</th><th class="d x-mob">Reste dû</th><th class="d x-mob">Si départ aujourd\'hui</th><th class="x-mob">État</th></tr></thead><tbody>'+
+    actifs.map(function(b,i){var s=ST[b.id],g=s.g,et=g.versee&&g.solde<g.versee*0.5?'<span class="pastille p-att">À reconstituer</span>':'<span class="pastille p-ok">En ordre</span>';
+      return '<tr class="cliq'+(i%2?' z':'')+'" onclick="ouvrirFicheBail(\''+b.id+'\')"><td><b>'+b.local+'</b></td><td><div class="ell">'+esc(nomBail(b))+'</div>'+(tel&&et.indexOf('p-att')>0?'<div class="m-c" style="font-size:12px;color:var(--att,#E0A458)">à reconstituer</div>':'')+'</td><td class="d x-mob">'+usd(g.versee+g.comp)+'</td><td class="d x-mob">'+usd(g.prel)+'</td><td class="d"><b>'+usd(g.solde)+'</b></td><td class="d x-mob'+(s.dette>0?' neg':'')+'">'+usd(s.dette)+'</td><td class="d x-mob">'+apresDettes(s)+'</td><td class="x-mob">'+et+'</td></tr>'}).join('')+
+    '<tr class="tot"><td colspan="2">Total</td><td class="d x-mob"></td><td class="d x-mob"></td><td class="d">'+usd(tA)+'</td><td class="x-mob"></td><td class="x-mob"></td><td class="x-mob"></td></tr></tbody></table></div></div>';
+  /* Anciens locataires : seulement ceux à qui il reste quelque chose à rendre */
+  var ligneAncien=function(b,i){var g=ST[b.id].g;return '<tr class="cliq'+(i%2?' z':'')+'" onclick="ouvrirSortie(\''+b.id+'\')"><td><b>'+b.local+'</b></td><td><div class="ell">'+esc(nomBail(b))+'</div><div class="muet m-c" style="font-size:12px">parti le '+fd(b.fin)+'</div></td><td class="x-mob">'+fd(b.fin)+'</td><td class="d x-mob">'+usd(g.versee+g.comp)+'</td><td class="d x-mob">'+usd(g.prel+g.ret)+'</td><td class="d x-mob">'+usd(g.remb)+'</td><td class="d"><b>'+usd(g.solde)+'</b></td></tr>'};
+  var teteAncien='<thead><tr><th>Local</th><th>Locataire</th><th class="x-mob">Parti le</th><th class="d x-mob">Versée</th><th class="d x-mob">Gardé</th><th class="d x-mob">Rendu</th><th class="d">À rendre</th></tr></thead>';
+  h+='<div class="carte mt"><h2>À rendre aux anciens locataires</h2>'+(aRendre.length?'<div class="tab-wrap"><table class="t'+(tel?' rel':'')+'">'+teteAncien+'<tbody>'+aRendre.map(ligneAncien).join('')+'</tbody></table></div><p class="muet" style="font-size:13.5px;margin:10px 0 0">Touche une ligne pour régler la garantie.</p>':'<div class="vide" style="padding:16px">Toutes les garanties des anciens locataires sont réglées.</div>');
+  if(reglees.length)h+='<button class="btn mini" style="margin-top:12px" onclick="V.garReglees=!V.garReglees;rendre()">'+(V.garReglees?'Masquer':'Voir')+' les garanties réglées ('+reglees.length+')</button>'+
+    (V.garReglees?'<div class="tab-wrap" style="margin-top:10px"><table class="t'+(tel?' rel':'')+'">'+teteAncien.replace('À rendre','Reste')+'<tbody>'+reglees.map(ligneAncien).join('')+'</tbody></table></div>':'');
+  h+='</div><p style="color:var(--doux-page,var(--doux));font-size:14px;margin-top:12px">« En caisse » : ce qu\'il reste de la garantie aujourd\'hui. « Si départ aujourd\'hui » : la garantie en caisse moins ce que le locataire doit encore. « Gardé » : pris pour des loyers ou retenu pour des dégâts au départ.</p>';
   return h;
 };
 
@@ -1997,6 +2045,8 @@ VUES.banque=function(){
 /* ---------- Construction : coût des travaux et retour sur investissement ---------- */
 var CATS_TRAVAUX=['Terrain','Gros œuvre (fondations, murs, toiture)','Plafond','Toilettes','Électricité','Eau et plomberie','Portes et fenêtres','Sol et carrelage','Peinture et finitions','Autre'];
 var CAT_PREF='Préfinancé par un locataire';
+/** Type de travaux d'un préfinancement → type utilisé dans Construction (pour « Par type de travaux »). */
+var CAT_DE_PREF={'Gros œuvre / maçonnerie':'Gros œuvre (fondations, murs, toiture)','Finitions (carrelage, peinture…)':'Peinture et finitions','Plafond':'Plafond','Fenêtres et portes':'Portes et fenêtres','Installation électrique':'Électricité','Plomberie / eau':'Eau et plomberie'};
 function surfaceM2(l){var m=String(l&&l.surface||'').replace(/,/g,'.').match(/(\d+(?:\.\d+)?)\s*[x×*]\s*(\d+(?:\.\d+)?)/i);return m?+m[1]*+m[2]:0}
 function dureeTxt(n){if(n==null)return '—';if(n<=0)return 'Récupéré';var a=Math.floor(n/12),m=n%12;return (a?a+' an'+(a>1?'s':''):'')+(a&&m?' ':'')+(m?m+' mois':'');}
 function calculConstruction(){
@@ -2006,7 +2056,8 @@ function calculConstruction(){
   if(!totP){surf=false;locs.forEach(function(l){poids[l.id]=1});totP=locs.length||1;}
   /* Les travaux saisis ici, puis les travaux préfinancés par un locataire (déjà notés ailleurs) */
   var L=(D.travaux||[]).map(function(t){return {t:t,usd:n2(t.usd),paye:t.etat!=='À venir',compte:t.categorie!=='Terrain'||terrain,pref:false}});
-  (D.prefinancements||[]).forEach(function(p){L.push({t:{id:p.id,mois:mk(p.date)||mk(p.premierMois),local:p.local,categorie:CAT_PREF,objet:prefLibComplet(p),montant:p.total,devise:'USD',etat:'Payé'},usd:n2(p.total),paye:true,compte:true,pref:true})});
+  (D.prefinancements||[]).forEach(function(p){var lg=prefLignes(p);if(!lg.length)lg=[{type:prefLib(p),devis:'',verse:n2(p.verse)||n2(p.total)}];
+    lg.forEach(function(x){L.push({t:{id:p.id,mois:mk(p.date)||mk(p.premierMois),local:p.local,categorie:CAT_DE_PREF[x.type]||'Autre',objet:x.type,montant:n2(x.verse),devis:n2(x.devis),devise:'USD',etat:'Payé'},usd:n2(x.verse),paye:true,compte:true,pref:true})})});
   var tot={paye:0,avenir:0,communPaye:0,communAvenir:0},cats={},parLoc={};
   locs.forEach(function(l){parLoc[l.id]={l:l,propre:0,propreAvenir:0,commun:0,communAvenir:0,percu:0}});
   L.forEach(function(x){if(!x.compte)return;var k=x.paye?'paye':'avenir';tot[k]+=x.usd;
@@ -2077,13 +2128,33 @@ VUES.construction=function(){
     '<div class="tab-wrap"><table class="t rel"><thead><tr><th>Local</th><th class="d x-mob">Travaux du local</th><th class="d x-mob">Part commune</th><th class="d">Coût</th><th class="d x-mob">Loyer</th><th class="d x-mob">Loyers perçus</th><th class="d">Récupéré</th><th>Délai</th></tr></thead><tbody>'+
     C.locaux.map(function(x,i){return '<tr class="'+(i%2?'z':'')+'"><td><b>'+x.l.id+'</b>'+(tel?'':' <span class="muet">'+esc(x.l.description)+'</span>')+'</td><td class="d x-mob">'+usd(Math.round(x.propre+x.propreAvenir))+'</td><td class="d x-mob">'+usd(Math.round(x.commun+x.communAvenir))+'</td><td class="d">'+usd(Math.round(x.coutTotal))+'</td><td class="d x-mob">'+(x.b?usd(x.loyer):'<span class="muet">Libre</span>')+'</td><td class="d x-mob">'+usd(x.percu)+'</td><td class="d">'+(x.pct!=null?Math.round(x.pct*100)+' %':'—')+'</td><td>'+(x.delai===0?'<span class="pastille p-ok">Récupéré</span>':x.delai==null?'<span class="muet">—</span>':dureeTxt(x.delai))+'</td></tr>'}).join('')+
     '</tbody></table></div></div>';
-  /* Liste des travaux */
+  /* Liste des travaux : une ligne par local (détail au toucher), ou une ligne par travaux */
   var liste=C.L.filter(function(x){return f.etat==='tout'||(f.etat==='avenir'?!x.paye:x.paye)}).sort(function(a,b){return (a.paye-b.paye)||String(b.t.mois||'').localeCompare(String(a.t.mois||''))||String(a.t.local||'ZZ').localeCompare(String(b.t.local||'ZZ'))});
-  h+='<div class="carte mt"><div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px"><h2 style="margin:0">Liste des travaux</h2><div class="onglets">'+[['tout','Tous'],['paye','Payés'],['avenir','À venir']].map(function(o){return '<button class="'+(f.etat===o[0]?'on':'')+'" onclick="V.trav.etat=\''+o[0]+'\';rendre()">'+o[1]+'</button>'}).join('')+'</div></div>'+
-    (liste.length?'<div class="tab-wrap"><table class="t rel"><thead><tr><th class="x-mob">Mois</th><th>Local</th><th>Travaux</th><th class="d">Montant</th><th>État</th></tr></thead><tbody>'+
-    liste.map(function(x,i){var tr=x.t;return '<tr class="cliq'+(i%2?' z':'')+'" onclick="'+(x.pref?'ouvrirPref':'ouvrirTravaux')+'(\''+tr.id+'\')"><td class="x-mob">'+(tr.mois?mLib(mk(tr.mois)):'<span class="muet">—</span>')+'</td><td><b>'+(tr.local||'Commun')+'</b></td><td><div class="ell" style="max-width:'+(tel?'130px':'240px')+'">'+esc(tr.objet||tr.categorie)+'</div>'+(tel?'':'<span class="sous muet" style="font-size:12px">'+esc(tr.categorie||'')+'</span>')+'</td><td class="d'+(x.compte?'':' muet')+'">'+mont(n2(tr.montant),tr.devise)+'</td><td>'+(x.paye?'<span class="pastille p-ok">Payé</span>':'<span class="pastille p-att">À venir</span>')+attenteIco(tr)+'</td></tr>'}).join('')+'</tbody></table></div>':'<div class="vide" style="padding:16px">Rien dans cette liste.</div>')+'</div>';
+  var parLocal=f.vue!=='detail';
+  h+='<div class="carte mt"><div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px"><h2 style="margin:0">Liste des travaux</h2><div style="display:flex;gap:8px;flex-wrap:wrap"><div class="onglets">'+[['local','Par local'],['detail','Tout le détail']].map(function(o){return '<button class="'+((o[0]==='local')===parLocal?'on':'')+'" onclick="V.trav.vue=\''+o[0]+'\';rendre()">'+o[1]+'</button>'}).join('')+'</div><div class="onglets">'+[['tout','Tous'],['paye','Payés'],['avenir','À venir']].map(function(o){return '<button class="'+(f.etat===o[0]?'on':'')+'" onclick="V.trav.etat=\''+o[0]+'\';rendre()">'+o[1]+'</button>'}).join('')+'</div></div></div>';
+  if(!liste.length)h+='<div class="vide" style="padding:16px">Rien dans cette liste.</div>';
+  else if(parLocal){
+    var G={};liste.forEach(function(x){var k=x.t.local||'';(G[k]=G[k]||{k:k,n:0,paye:0,avenir:0,types:[]});var g=G[k];g.n++;if(x.compte){if(x.paye)g.paye+=x.usd;else g.avenir+=x.usd;}if(g.types.indexOf(x.t.categorie)<0)g.types.push(x.t.categorie);});
+    var gs=Object.keys(G).sort(function(a,b){return (a?0:1)-(b?0:1)||a.localeCompare(b)}).map(function(k){return G[k]});
+    h+='<div class="tab-wrap"><table class="t'+(tel?' rel':'')+'"><thead><tr><th>Local</th><th>Travaux</th><th class="d">Payé</th><th class="d">À venir</th></tr></thead><tbody>'+
+      gs.map(function(g,i){var lo=g.k?local(g.k):null;return '<tr class="cliq'+(i%2?' z':'')+'" onclick="travauxDuLocal(\''+g.k+'\')"><td><b>'+(g.k||'Commun')+'</b>'+(tel?'':' <span class="muet">'+esc(g.k?(lo&&lo.description)||'':'Parties communes')+'</span>')+'</td><td><div class="ell" style="max-width:'+(tel?'120px':'360px')+'">'+g.n+' · '+esc(g.types.join(', '))+'</div></td><td class="d">'+usd(g.paye)+'</td><td class="d">'+(g.avenir?usd(g.avenir):'<span class="muet">—</span>')+'</td></tr>'}).join('')+'</tbody></table></div>';
+  }else h+='<div class="tab-wrap"><table class="t rel"><thead><tr><th class="x-mob">Mois</th><th>Local</th><th>Travaux</th><th class="d">Montant</th><th>État</th></tr></thead><tbody>'+
+    liste.map(function(x,i){var tr=x.t;return '<tr class="cliq'+(i%2?' z':'')+'" onclick="'+(x.pref?'ouvrirPref':'ouvrirTravaux')+'(\''+tr.id+'\')"><td class="x-mob">'+(tr.mois?mLib(mk(tr.mois)):'<span class="muet">—</span>')+'</td><td><b>'+(tr.local||'Commun')+'</b></td><td><div class="ell" style="max-width:'+(tel?'130px':'240px')+'">'+esc(tr.objet||tr.categorie)+'</div>'+(tel?'':'<span class="sous muet" style="font-size:12px">'+esc(tr.categorie||'')+(x.pref?' · préfinancé par le locataire':'')+'</span>')+'</td><td class="d'+(x.compte?'':' muet')+'">'+mont(n2(tr.montant),tr.devise)+'</td><td>'+(x.paye?'<span class="pastille p-ok">Payé</span>':'<span class="pastille p-att">À venir</span>')+attenteIco(tr)+'</td></tr>'}).join('')+'</tbody></table></div>';
+  h+='</div>';
   return h;
 };
+/** Tous les travaux d'un local (ou des parties communes) : type, devis, prix payé, état. */
+function travauxDuLocal(k){
+  var C=calculConstruction(),f=V.trav||{etat:'tout'},tel=estTel();
+  var L=C.L.filter(function(x){return (x.t.local||'')===k&&(f.etat==='tout'||(f.etat==='avenir'?!x.paye:x.paye))}).sort(function(a,b){return String(a.t.categorie).localeCompare(String(b.t.categorie))||String(a.t.mois||'').localeCompare(String(b.t.mois||''))});
+  var tP=0,tA=0,tD=0;L.forEach(function(x){if(!x.compte)return;if(x.paye)tP+=x.usd;else tA+=x.usd;tD+=n2(x.t.devis)});
+  var lo=k?local(k):null;
+  var c='<p style="margin-top:0;color:var(--doux)">'+(k?esc((lo&&lo.description)||''):'Parties communes et travaux de tout le complexe')+'. Touche une ligne pour la modifier.</p>'+
+    '<div class="tab-wrap"><table class="t'+(tel?' rel':'')+'"><thead><tr><th>Travaux</th><th class="x-mob">Mois</th><th class="d">Devis</th><th class="d">Prix</th><th class="x-mob">État</th></tr></thead><tbody>'+
+    L.map(function(x,i){var tr=x.t,dv=n2(tr.devis);return '<tr class="cliq'+(i%2?' z':'')+'" onclick="'+(x.pref?'ouvrirPref':'ouvrirTravaux')+'(\''+tr.id+'\')"><td><div class="ell" style="max-width:'+(tel?'150px':'320px')+'">'+esc(tr.objet||tr.categorie)+'</div><span class="sous muet" style="font-size:12px">'+esc(tr.categorie||'')+(x.pref?' · préfinancé':'')+(tel&&!x.paye?' · <b>à venir</b>':'')+'</span></td><td class="x-mob">'+(tr.mois?mLib(mk(tr.mois)):'—')+'</td><td class="d">'+(dv?usd(dv):'<span class="muet">—</span>')+'</td><td class="d'+(x.compte?'':' muet')+'">'+mont(n2(tr.montant),tr.devise)+'</td><td class="x-mob">'+(x.paye?'<span class="pastille p-ok">Payé</span>':'<span class="pastille p-att">À venir</span>')+'</td></tr>'}).join('')+
+    '<tr class="tot"><td>Total</td><td class="x-mob"></td><td class="d" style="white-space:nowrap">'+(tD?usd(tD):'')+'</td><td class="d" style="white-space:nowrap">'+usd(tP+tA)+'</td><td class="x-mob">'+(tA?'<span class="muet" style="font-size:12px">dont '+usdTxt(tA)+' à venir</span>':'')+'</td></tr></tbody></table></div>';
+  fenetre('Travaux — '+(k||'parties communes'),c,'<button class="btn gauche" onclick="ouvrirTravaux(null,\''+k+'\')">'+ico('plus')+'Ajouter des travaux</button><button class="btn prim" onclick="fermer()">Fermer</button>',true);
+}
 function detailConstruction(){
   var C=calculConstruction(),R=C.R,l=function(a,b,neg){return '<tr><td>'+a+'</td><td class="d'+(neg?' neg':'')+'">'+(neg?'− ':'')+usd(b)+'</td></tr>'};
   var c='<p style="margin-top:0;color:var(--doux)">Ce que le complexe a rapporté depuis le début du suivi ('+fd(String(P.debutSuivi||'').slice(0,10))+'), moins ses charges.</p><div class="tab-wrap"><table class="t"><tbody>'+
@@ -2094,8 +2165,8 @@ function detailConstruction(){
     '<p style="font-size:13.5px;color:var(--doux)">Délai = reste à récupérer ÷ ce qui est récupéré chaque mois. Rendement par an = 12 × ce qui est récupéré chaque mois ÷ coût total prévu ('+usd(C.cout)+'). Les garanties ne comptent pas : elles appartiennent aux locataires. Les travaux préfinancés par un locataire comptent comme une dépense de construction.</p>';
   fenetre('Détail du calcul',c,'<button class="btn prim" onclick="fermer()">Fermer</button>');
 }
-function ouvrirTravaux(id){
-  var t=id?(D.travaux||[]).find(function(x){return x.id===id}):{id:'',mois:'',local:'',categorie:'Plafond',objet:'',montant:'',devise:'USD',etat:'Payé',notes:''};
+function ouvrirTravaux(id,loc){
+  var t=id?(D.travaux||[]).find(function(x){return x.id===id}):{id:'',mois:'',local:loc||'',categorie:'Plafond',objet:'',montant:'',devise:'USD',etat:'Payé',notes:''};
   if(!t)return;
   var cats=CATS_TRAVAUX.concat(t.categorie&&CATS_TRAVAUX.indexOf(t.categorie)<0?[t.categorie]:[]);
   fenetre(id?'Travaux '+id:'Ajouter des travaux','<form id="fTrav" onsubmit="travValider(event,\''+(id||'')+'\')"><div class="champs">'+

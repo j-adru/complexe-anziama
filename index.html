@@ -1514,7 +1514,7 @@ function ouvrirFicheBail(id){
       :(s.g.solde>0.009?'<button class="btn prim" onclick="ouvrirSortie(\''+id+'\')">Régler la garantie</button>':'')+(s.dette>0.009?'<button class="btn prim" onclick="fermer();V.vue=\'encaisser\';encBail(\''+id+'\')">Encaisser sa dette</button>':'')),true);
 }
 /* ---------- Préfinancements : travaux payés par un locataire, rendus en retenant une somme sur son loyer chaque mois ---------- */
-var TYPES_TRAVAUX=['Gros œuvre / maçonnerie','Finitions (carrelage, peinture…)','Plafond','Fenêtres et portes','Installation électrique','Plomberie / eau'];
+var TYPES_TRAVAUX=['Gros œuvre / maçonnerie','Finitions (carrelage, peinture…)','Plafond','Fenêtres et portes','Installation électrique','Plomberie / eau','Auvent (tôle à l\'avant)'];
 /** Nom affiché : le type de travaux choisi (ou écrit), sinon l'ancien « objet ». */
 function prefLib(p){return p.nature||p.objet||'Travaux'}
 function prefLibComplet(p){return prefLib(p)+(p.nature&&p.objet?' — '+p.objet:'')}
@@ -2040,10 +2040,10 @@ VUES.banque=function(){
 };
 
 /* ---------- Construction : coût des travaux et retour sur investissement ---------- */
-var CATS_TRAVAUX=['Terrain','Gros œuvre (fondations, murs, toiture)','Plafond','Toilettes','Électricité','Eau et plomberie','Portes et fenêtres','Sol et carrelage','Peinture et finitions','Autre'];
+var CATS_TRAVAUX=['Terrain','Gros œuvre (fondations, murs, toiture)','Plafond','Toilettes','Électricité','Eau et plomberie','Portes et fenêtres','Sol et carrelage','Auvent (tôle à l\'avant)','Peinture et finitions','Autre'];
 var CAT_PREF='Préfinancé par un locataire';
 /** Type de travaux d'un préfinancement → type utilisé dans Construction (pour « Par type de travaux »). */
-var CAT_DE_PREF={'Gros œuvre / maçonnerie':'Gros œuvre (fondations, murs, toiture)','Finitions (carrelage, peinture…)':'Peinture et finitions','Plafond':'Plafond','Fenêtres et portes':'Portes et fenêtres','Installation électrique':'Électricité','Plomberie / eau':'Eau et plomberie'};
+var CAT_DE_PREF={'Gros œuvre / maçonnerie':'Gros œuvre (fondations, murs, toiture)','Finitions (carrelage, peinture…)':'Peinture et finitions','Plafond':'Plafond','Fenêtres et portes':'Portes et fenêtres','Installation électrique':'Électricité','Plomberie / eau':'Eau et plomberie','Auvent (tôle à l\'avant)':'Auvent (tôle à l\'avant)'};
 function surfaceM2(l){var m=String(l&&l.surface||'').replace(/,/g,'.').match(/(\d+(?:\.\d+)?)\s*[x×*]\s*(\d+(?:\.\d+)?)/i);return m?+m[1]*+m[2]:0}
 function dureeTxt(n){if(n==null)return '—';if(n<=0)return 'Récupéré';var a=Math.floor(n/12),m=n%12;return (a?a+' an'+(a>1?'s':''):'')+(a&&m?' ':'')+(m?m+' mois':'');}
 function calculConstruction(){

@@ -300,6 +300,16 @@ label.ch .aide{font-weight:400;color:var(--pale);font-size:12.5px}
 .doc-tete .titre span{font-size:13px;color:var(--doux)}
 .doc-info{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:18px;font-size:14px}
 .doc-info>div>span:first-child{display:block;color:var(--doux);font-size:12.5px}
+/* Relevés : en-tête en largeur, lignes sans retour à la ligne, totaux clairs */
+.rel-tete{display:flex;flex-wrap:wrap;gap:10px 36px;margin-bottom:18px;font-size:14px}
+.rel-tete>div{white-space:nowrap}
+.rel-tete span{display:block;color:var(--doux);font-size:12.5px}
+table.t.rel td{white-space:nowrap}
+.rel-totaux{margin:14px 0 0 auto;width:fit-content;min-width:320px;max-width:100%;font-size:14px}
+.rel-totaux>div{display:flex;justify-content:space-between;gap:24px;padding:7px 12px;border-bottom:1px solid var(--trait2);white-space:nowrap}
+.rel-totaux>div b{font-variant-numeric:tabular-nums}
+.rel-totaux>div.reste{margin-top:6px;border:2px solid var(--ko);border-radius:8px;background:var(--ko-fond);color:var(--ko);font-size:17px;font-weight:700}
+.rel-totaux>div.reste.ajour{border-color:var(--ok);background:var(--ok-fond);color:var(--ok)}
 .doc-pied{margin-top:22px;font-size:12.5px;color:var(--pale);border-top:1px solid var(--trait2);padding-top:10px}
 .signatures{display:flex;justify-content:space-between;margin-top:40px;font-size:13px;color:var(--doux)}
 .mouvements{display:flex;flex-direction:column;gap:2px;font-size:13.5px;margin-top:10px}
@@ -322,7 +332,10 @@ label.ch .aide{font-weight:400;color:var(--pale);font-size:12.5px}
   .som{filter:none!important}
   table.t tr.detail[hidden]{display:table-row}
   table.t th{background:#0E1A2B!important;color:#fff!important;-webkit-print-color-adjust:exact;print-color-adjust:exact;position:static}
-  table.t tr.z td,table.t tr.grp td,table.t tr.tot td,.calcul .l.final{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  table.t tr.z td,table.t tr.grp td,table.t tr.tot td,.calcul .l.final,.rel-totaux .reste{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  table.t.rel{font-size:12.5px}
+  table.t.rel th,table.t.rel td{padding:7px 8px}
+  table.t.rel .lien-det{font-size:12.5px}
   @page{margin:12mm}
 }
 /* Appli installée sur iPhone : la barre de l'heure est par-dessus la page. Le fond passe dessous, le contenu commence plus bas. */
@@ -370,7 +383,7 @@ label.ch .aide{font-weight:400;color:var(--pale);font-size:12.5px}
   .navmob button.actif svg{color:#D9BD7E}
 }
 /* Tableaux en cartes sur téléphone */
-@media (max-width:700px){
+@media screen and (max-width:700px){
   table.t,table.t tbody,table.t tr,table.t td{display:block;width:100%}
   table.t thead{display:none}
   table.t tr{padding:10px 14px;border-bottom:1px solid var(--trait)}
@@ -1505,8 +1518,8 @@ function basculerDet(btn,id,n){var r=document.getElementById(id);if(!r)return;r.
 function tableLoyers(L,avecLocataire){
   if(!L.length)return '<div class="tab-wrap"><div class="vide">Aucun mois sur cette période.</div></div>';
   L=L.slice().sort(function(a,b){return b.m.localeCompare(a.m)||a.b.local.localeCompare(b.b.local)});
-  var nc=avecLocataire?8:7,tD=0,tP=0,tR=0,h='<div class="tab-wrap"><table class="t"><thead><tr><th>Mois</th>'+(avecLocataire?'<th>Locataire</th>':'')+'<th>À payer le</th><th class="d">Dû</th><th class="d">Payé</th><th class="d">Reste</th><th>Statut</th><th>Paiements</th></tr></thead><tbody>';
-  L.forEach(function(l,i){tD+=l.avance?0:l.du;tP+=l.avance?0:l.paye;tR+=l.avance?0:l.reste;var n=l.pj.length+l.ded.length,id='det'+(++DET_N),paie;
+  var nc=avecLocataire?8:7,tD=0,tP=0,tR=0,mm=[],h='<div class="tab-wrap"><table class="t rel"><thead><tr><th>Mois</th>'+(avecLocataire?'<th>Locataire</th>':'')+'<th>À payer le</th><th class="d">Dû</th><th class="d">Payé</th><th class="d">Reste</th><th>Statut</th><th>Paiements</th></tr></thead><tbody>';
+  L.forEach(function(l,i){if(!l.avance)mm.push(l.m);tD+=l.avance?0:l.du;tP+=l.avance?0:l.paye;tR+=l.avance?0:l.reste;var n=l.pj.length+l.ded.length,id='det'+(++DET_N),paie;
     var details=l.pj.map(function(j){return '<div>'+esc(libPaiement(j))+' — <b>'+mont(j.montant,j.devise)+'</b>'+(j.recu&&!j._attente?' · <a href="#" onclick="ouvrirRecu([\''+j.id+'\']);return false">voir le reçu</a>':'')+'</div>'}).concat(l.ded.map(function(d){return '<div>Déduction travaux préfinancés ('+esc(d.p.objet)+') — <b>'+usd(d.v)+'</b></div>'}));
     if(!n)paie='<span class="muet">—</span>';
     else if(n===1)paie='<span style="font-size:13px">'+(l.pj[0]?esc(libPaiement(l.pj[0])):'Déduction travaux ('+esc(l.ded[0].p.objet)+')')+'</span>';
@@ -1514,7 +1527,9 @@ function tableLoyers(L,avecLocataire){
     h+='<tr class="'+(i%2?'z':'')+'"><td><b>'+mLib(l.m)+'</b></td>'+(avecLocataire?'<td>'+esc(nomBail(l.b))+' <span class="idb">'+l.b.id+'</span></td>':'')+'<td>'+fd(ds(echeance(l.m,l.b)))+'</td><td class="d">'+usd(l.du)+'</td><td class="d">'+usd(l.paye)+'</td><td class="d'+(l.reste>0.009?' neg':'')+'">'+usd(l.reste)+'</td><td>'+pastilleMois(l)+'</td><td>'+paie+'</td></tr>';
     if(n>1)h+='<tr class="detail" id="'+id+'" hidden><td colspan="'+nc+'">'+details.join('')+'</td></tr>';
   });
-  h+='<tr class="tot"><td colspan="'+(avecLocataire?3:2)+'">Total</td><td class="d">'+usd(tD)+'</td><td class="d">'+usd(tP)+'</td><td class="d">'+usd(tR)+'</td><td colspan="2">'+(tR>0.009?'Reste à payer':'À jour')+'</td></tr></tbody></table></div>';
+  mm.sort();var per=!mm.length?'':mm[0]===mm[mm.length-1]?' ('+mLib(mm[0])+')':' ('+mLib(mm[0])+' – '+mLib(mm[mm.length-1])+')';
+  h+='</tbody></table></div><div class="rel-totaux"><div><span>Total attendu sur la période'+per+'</span><b>'+usd(tD)+'</b></div><div><span>Total reçu</span><b>'+usd(tP)+'</b></div>'+
+    (tR>0.009?'<div class="reste"><span>Reste dû</span><b>'+usd(tR)+'</b></div>':'<div class="reste ajour"><span>Reste dû</span><b>0 $ · compte à jour</b></div>')+'</div>';
   return h;
 }
 function tableParts(s,b,y){
@@ -1530,6 +1545,9 @@ function mouvementsGarantie(b){
   L.sort(function(a,b){return (a.date||'').localeCompare(b.date||'')});
   return '<div class="mouvements">'+L.map(function(x){return '<div><span>'+fd(x.date)+' — '+esc(x.lib)+'</span><b class="'+(x.v<0?'neg':'')+'">'+(x.v<0?'− ':'+ ')+usd(Math.abs(x.v))+'</b></div>'}).join('')+'</div>';
 }
+function debutSuivi(bs){var s=String(P.debutSuivi||'').slice(0,10),d='';bs.forEach(function(b){var x=String(b.debut||'').slice(0,10);if(s>x)x=s;if(x&&(!d||x<d))d=x;});return d||s;}
+function relTete(cols){return '<div class="rel-tete">'+cols.map(function(c){return '<div><span>'+c[0]+'</span>'+c[1]+'</div>'}).join('')+'</div>';}
+function relSous(R,bs){if(R.annee!=='tout')return 'Année '+R.annee;var d=debutSuivi(bs);return d?'Suivi depuis le '+fd(d):'Depuis le début du suivi';}
 VUES.releves=function(){
   var R=V.rel;DET_N=0;
   var h=entete('Relevés','Une ligne par mois : ce qui était dû, ce qui a été payé, ce qui reste. Touche « Payé en 2 fois » pour voir le détail.','<button class="btn prim" onclick="var d=document.getElementById(\'docReleve\');if(d)imprimer(d.innerHTML)">'+ico('imprimer')+'Imprimer</button>');
@@ -1543,8 +1561,9 @@ VUES.releves=function(){
   if(R.mode==='bail'){
     if(!R.bail||!bail(R.bail))return h+'<div class="carte vide">Choisis un locataire pour afficher ses relevés.</div>';
     var b=bail(R.bail),s=ST[b.id];
-    doc=docTete('Relevé du locataire',R.annee==='tout'?'Depuis le début du suivi':'Année '+R.annee)+
-      '<div class="doc-info"><div><span>Locataire</span><b>'+esc(nomBail(b))+'</b></div><div><span>Local</span>'+b.local+' – '+esc((local(b.local)||{}).description||'')+'</div><div><span>N° de bail</span>'+b.id+' · '+fd(b.debut)+' → '+(b.fin?fd(b.fin):'en cours')+'</div><div><span>Loyer mensuel</span>'+mont(b.loyer,b.devise)+'</div></div>'+
+    var lb=local(b.local)||{};
+    doc=docTete('Relevé du locataire',relSous(R,[b]))+
+      relTete([['Local','<b>'+b.local+'</b>'],['Locataire','<b>'+esc(nomBail(b))+'</b>'],['Description',esc(lb.description||'—')+(lb.surface?' · '+esc(lb.surface):'')],['Bail',b.id+(b.fin?' · fini le '+fd(b.fin):'')],['Loyer mensuel',mont(b.loyer,b.devise)],['Début du suivi',fd(debutSuivi([b]))]])+
       '<h3>Loyers</h3>'+tableLoyers(lignesMois(b).filter(parAn),false)+
       (s.parts.length?'<h3 style="margin-top:22px">Factures SNEL / Regideso</h3>'+tableParts(s,b,R.annee):'')+
       (s.rep.du>0?'<h3 style="margin-top:22px">Réparations à sa charge</h3><div class="mouvements">'+s.J.filter(function(j){return j.type==='Réparation à charge du locataire'||j.type==='Paiement réparation'}).map(function(j){return '<div><span>'+fd(j.date)+' — '+esc(j.type==='Paiement réparation'?'Remboursé':'Facturé')+(j.commentaire?' : '+esc(j.commentaire):'')+'</span><b>'+usd(j.usd)+'</b></div>'}).join('')+'</div>':'')+
@@ -1554,9 +1573,11 @@ VUES.releves=function(){
     var l=local(R.local),bs=D.baux.filter(function(b){return b.local===R.local});
     var L=[];bs.forEach(function(b){lignesMois(b).filter(parAn).forEach(function(x){L.push(x)})});
     var dep=D.journal.filter(function(j){return j.local===R.local&&(j.type==='Entretien'||j.type==='Taxe'||j.type==='Autre dépense')&&(R.annee==='tout'||periode(j).slice(0,4)===R.annee)});
-    doc=docTete('Relevé du local '+l.id,R.annee==='tout'?'Depuis le début du suivi':'Année '+R.annee)+
-      '<div class="doc-info"><div><span>Local</span><b>'+l.id+' – '+esc(l.description)+'</b></div><div><span>Surface</span>'+esc(l.surface||'—')+'</div><div><span>Locataires sur la période</span>'+bs.length+'</div><div><span>Locataire actuel</span>'+esc(bailActif(l.id)?nomBail(bailActif(l.id)):'Libre')+'</div></div>'+
-      tableLoyers(L,true)+(dep.length?'<h3 style="margin-top:22px">Dépenses d\'entretien du local</h3>'+tableOps(dep,true):'')+docPied();
+    var bsP=bs.filter(function(b){return L.some(function(x){return x.b===b})}),ba=bailActif(l.id);
+    if(!bsP.length&&ba)bsP=[ba];
+    doc=docTete('Relevé du local '+l.id,relSous(R,bsP.length?bsP:bs))+
+      relTete([['Local','<b>'+l.id+'</b>'],[bsP.length>1?'Locataires':'Locataire','<b>'+(bsP.length?bsP.map(function(b){return esc(nomBail(b))}).join(', '):'Libre')+'</b>'],['Description',esc(l.description||'—')],['Surface',esc(l.surface||'—')],['Début du suivi',fd(debutSuivi(bsP.length?bsP:bs))||'—']])+
+      tableLoyers(L,bsP.length>1)+(dep.length?'<h3 style="margin-top:22px">Dépenses d\'entretien du local</h3>'+tableOps(dep,true):'')+docPied();
   } else {
     var m=R.mois||addM(mk(TODAY()),-1),RM=resumeMois(m),tD=RM.attendu,tP=RM.recu,factM=FC.filter(function(F){return F.m===m});
     doc=docTete('Situation des loyers','Loyers de '+mLib(m)+' — payables le '+(P.jourDefaut||5)+' '+MOIS[+addM(m,1).slice(5)-1])+

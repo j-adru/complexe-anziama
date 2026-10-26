@@ -39,11 +39,12 @@
   --ombre:0 10px 30px -8px rgba(10,18,32,.16);
   --rayon:14px;
   /* Boutons : relief doux, contour doré, enfoncement au toucher */
-  --btn-fond:linear-gradient(180deg,#FFFFFF,#F4EEE1);
-  --btn-bord:rgba(184,146,74,.42);
+  --btn-fond:linear-gradient(180deg,#FFFBF0,#F1E2BF);
+  --btn-bord:rgba(168,128,56,.55);
+  --btn-ico:#9A7432;
   --btn-ombre:inset 0 1px 0 rgba(255,255,255,.95),0 1px 2px rgba(14,26,43,.10),0 6px 14px -5px rgba(14,26,43,.22);
   --btn-ombre-presse:inset 0 2px 4px rgba(14,26,43,.14);
-  --btn-on:linear-gradient(180deg,#FFF9EC,#F1E3C2);
+  --btn-on:linear-gradient(180deg,#F6E3B4,#E2C27F);
 }
 :root[data-theme="dark"]{
   --btn-fond:linear-gradient(180deg,rgba(255,255,255,.13),rgba(255,255,255,.04));
@@ -51,6 +52,7 @@
   --btn-ombre:inset 0 1px 0 rgba(255,255,255,.14),0 1px 2px rgba(0,0,0,.45),0 8px 18px -6px rgba(0,0,0,.6);
   --btn-ombre-presse:inset 0 2px 5px rgba(0,0,0,.45);
   --btn-on:linear-gradient(180deg,rgba(217,189,126,.30),rgba(217,189,126,.12));
+  --btn-ico:#E2C88E;
 }
 @media (prefers-color-scheme:dark){
   :root:not([data-theme="light"]){
@@ -59,6 +61,7 @@
     --btn-ombre:inset 0 1px 0 rgba(255,255,255,.14),0 1px 2px rgba(0,0,0,.45),0 8px 18px -6px rgba(0,0,0,.6);
     --btn-ombre-presse:inset 0 2px 5px rgba(0,0,0,.45);
     --btn-on:linear-gradient(180deg,rgba(217,189,126,.30),rgba(217,189,126,.12));
+    --btn-ico:#E2C88E;
   }
 }
 :root[data-theme="dark"]{
@@ -348,14 +351,18 @@ table.t.rel .m-c{display:none}
 /* Boutons : un vrai relief, partout */
 .btn,.choix button,.portes-choix button,.liste-locaux button{background:var(--btn-fond);border:1px solid var(--btn-bord);box-shadow:var(--btn-ombre);transition:transform .12s ease,box-shadow .12s ease,border-color .12s}
 .btn:active,.choix button:active,.portes-choix button:active,.liste-locaux button:active{transform:scale(.97);box-shadow:var(--btn-ombre-presse)}
-.btn.prim{background:linear-gradient(180deg,#1C2D47,#0E1A2B);border-color:rgba(217,189,126,.6);color:#F3E6C6;box-shadow:inset 0 1px 0 rgba(255,255,255,.14),0 1px 2px rgba(14,26,43,.25),0 8px 18px -6px rgba(14,26,43,.45)}
+.btn.prim{background:linear-gradient(180deg,#E4C98C,#B8924A);border-color:rgba(150,112,46,.7);color:#14100A;box-shadow:inset 0 1px 0 rgba(255,255,255,.5),0 1px 2px rgba(80,56,14,.3),0 8px 18px -6px rgba(150,112,46,.55)}
+.btn.prim svg{color:#14100A}
+.btn svg,.barre button svg{color:var(--btn-ico)}
+.barre button{background:var(--btn-fond);border:1px solid var(--btn-bord);box-shadow:var(--btn-ombre)}
+.btn:hover,.barre button:hover,.choix button:hover,.portes-choix button:hover,.liste-locaux button:hover{border-color:var(--or)}
 :root[data-theme="dark"] .btn.prim{background:linear-gradient(180deg,#E4C98C,#B8924A);color:#14100A;border-color:rgba(255,236,190,.7);box-shadow:inset 0 1px 0 rgba(255,255,255,.45),0 1px 2px rgba(0,0,0,.4),0 8px 20px -6px rgba(184,146,74,.55)}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .btn.prim{background:linear-gradient(180deg,#E4C98C,#B8924A);color:#14100A;border-color:rgba(255,236,190,.7);box-shadow:inset 0 1px 0 rgba(255,255,255,.45),0 1px 2px rgba(0,0,0,.4),0 8px 20px -6px rgba(184,146,74,.55)}}
 .choix button.on,.portes-choix button.on{background:var(--btn-on);border-color:var(--or);box-shadow:0 0 0 2px color-mix(in srgb,var(--or) 45%,transparent),var(--btn-ombre)}
 /* Onglets façon Apple : un rail creux, l'onglet choisi en relief */
 .onglets{padding:3px;gap:2px;background:var(--gris-fond);border:1px solid var(--trait2);box-shadow:inset 0 1px 2px rgba(0,0,0,.08)}
 .onglets button{border-radius:9px;min-height:36px;padding:7px 14px}
-.onglets button.on{background:var(--btn-fond);color:var(--texte);box-shadow:var(--btn-ombre);border:1px solid var(--btn-bord)}
+.onglets button.on{background:var(--btn-on);color:var(--texte);box-shadow:var(--btn-ombre);border:1px solid var(--btn-bord);font-weight:600}
 /* Choix « qu'est-ce qui a été payé » : six boutons de même taille */
 .choix{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
 .choix button{min-width:0;height:66px;padding:10px 14px;display:flex;flex-direction:column;justify-content:center}
@@ -370,6 +377,41 @@ table.t.rel .m-c{display:none}
 .barre-outils{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 .barre-outils .doc-btn{margin-left:8px}
 .mob-seul{display:none}
+/* Mode clair sur PC : le menu de gauche suit le thème */
+:root[data-theme="light"] .side{background:rgba(255,251,242,.86);color:#2A3242;border-right:1px solid rgba(168,128,56,.25);box-shadow:inset -1px 0 0 rgba(255,255,255,.6),6px 0 24px -12px rgba(60,45,15,.18)}
+:root[data-theme="light"] .plaque{border-color:rgba(168,128,56,.55)}
+:root[data-theme="light"] .plaque:after{border-color:rgba(168,128,56,.22)}
+:root[data-theme="light"] .plaque .petit{color:#9A7432}
+:root[data-theme="light"] .plaque .grand{color:#0E1A2B}
+:root[data-theme="light"] .plaque .adr,:root[data-theme="light"] .nav .groupe,:root[data-theme="light"] .side .pied{color:#7A6A4C}
+:root[data-theme="light"] .side .pied{border-top-color:rgba(168,128,56,.18)}
+:root[data-theme="light"] .nav button{color:#2A3242}
+:root[data-theme="light"] .nav button svg{color:#9A7432;opacity:1}
+:root[data-theme="light"] .nav button:hover{background:rgba(184,146,74,.12);color:#0E1A2B}
+:root[data-theme="light"] .nav button.actif{background:linear-gradient(180deg,#F6E3B4,#E7CB8C);color:#14100A;box-shadow:inset 0 1px 0 rgba(255,255,255,.6),0 4px 10px -4px rgba(150,112,46,.45)}
+:root[data-theme="light"] .nav button.actif svg{color:#6E4F16}
+@media (prefers-color-scheme:light){
+  :root:not([data-theme="dark"]) .side{background:rgba(255,251,242,.86);color:#2A3242;border-right:1px solid rgba(168,128,56,.25);box-shadow:inset -1px 0 0 rgba(255,255,255,.6),6px 0 24px -12px rgba(60,45,15,.18)}
+  :root:not([data-theme="dark"]) .plaque{border-color:rgba(168,128,56,.55)}
+  :root:not([data-theme="dark"]) .plaque:after{border-color:rgba(168,128,56,.22)}
+  :root:not([data-theme="dark"]) .plaque .petit{color:#9A7432}
+  :root:not([data-theme="dark"]) .plaque .grand{color:#0E1A2B}
+  :root:not([data-theme="dark"]) .plaque .adr,:root:not([data-theme="dark"]) .nav .groupe,:root:not([data-theme="dark"]) .side .pied{color:#7A6A4C}
+  :root:not([data-theme="dark"]) .side .pied{border-top-color:rgba(168,128,56,.18)}
+  :root:not([data-theme="dark"]) .nav button{color:#2A3242}
+  :root:not([data-theme="dark"]) .nav button svg{color:#9A7432;opacity:1}
+  :root:not([data-theme="dark"]) .nav button:hover{background:rgba(184,146,74,.12);color:#0E1A2B}
+  :root:not([data-theme="dark"]) .nav button.actif{background:linear-gradient(180deg,#F6E3B4,#E7CB8C);color:#14100A;box-shadow:inset 0 1px 0 rgba(255,255,255,.6),0 4px 10px -4px rgba(150,112,46,.45)}
+  :root:not([data-theme="dark"]) .nav button.actif svg{color:#6E4F16}
+}
+/* Mode sombre sur PC : menu en verre, comme sur téléphone */
+.side{background:rgba(9,16,29,.62)}
+.nav button.actif{background:linear-gradient(180deg,rgba(217,189,126,.22),rgba(217,189,126,.08));box-shadow:inset 0 0 0 1px rgba(217,189,126,.3)}
+/* Factures du mois (accueil) */
+.factures-mois{margin-top:14px;display:flex;flex-direction:column;gap:6px}
+.factures-mois .titre-f{font-size:12.5px;color:var(--doux)}
+.factures-mois button{display:flex;justify-content:space-between;align-items:center;gap:10px;border-radius:10px;padding:8px 11px;cursor:pointer;text-align:left;font-size:13.5px;color:var(--texte);background:var(--btn-fond);border:1px solid var(--btn-bord);box-shadow:var(--btn-ombre)}
+.factures-mois button .sous{display:block;font-size:12px;color:var(--pale)}
 .ell{max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .nw{white-space:nowrap}
 .onglets .court{display:none}
@@ -521,11 +563,12 @@ table.t.rel .m-c{display:none}
   .totaux-mois div>b{font-size:17px}
   /* Encaisser */
   .portes-choix{grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}
-  .portes-choix button{height:72px;padding:7px 8px;border-radius:12px}
+  .portes-choix{grid-auto-rows:1fr}
+  .portes-choix button{height:auto;min-height:84px;padding:8px 9px;border-radius:12px;justify-content:flex-start}
   .portes-choix .id{font-size:15px}
   .portes-choix .id .idb{display:none}
-  .portes-choix .qui{font-size:11.5px;font-weight:500;margin-top:1px}
-  .portes-choix .etat-l{margin-top:4px;font-size:10.5px}
+  .portes-choix .qui{font-size:12px;font-weight:500;margin-top:2px;line-height:1.3;white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;word-break:break-word}
+  .portes-choix .etat-l{margin-top:auto;padding-top:5px;font-size:10.5px}
   .portes-choix .etat-l .pastille{font-size:10.5px;padding:1px 6px}
   .choix{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
   .choix button{height:60px;padding:8px 12px}
@@ -1094,7 +1137,8 @@ VUES.accueil=function(){
   var impayes=D.baux.filter(function(b){return b.statut==='Actif'}).reduce(function(s,b){return s+ST[b.id].reste},0);
   var impAnciens=D.baux.filter(function(b){return b.statut!=='Actif'}).reduce(function(s,b){return s+ST[b.id].dette},0);
   var garanties=D.baux.filter(function(b){return b.statut==='Actif'}).reduce(function(s,b){return s+ST[b.id].g.solde},0);
-  var h=entete('Bonjour','Situation du complexe au '+fd(TODAY()),
+  var hr=new Date().getHours(),salut=hr>=5&&hr<12?'Bonjour':hr>=12&&hr<18?'Bon après-midi':'Bonsoir';
+  var h=entete(salut,'Situation du complexe au '+fd(TODAY()),
     '<div class="outils actions-accueil"><button class="btn prim" onclick="aller(\'encaisser\',{enc:{bail:\'\'}})">'+ico('encaisser')+'<span class="long">Encaisser un paiement</span><span class="court">Encaisser</span></button>'+
     '<button class="btn" onclick="aller(\'depenses\')">'+ico('depense')+'<span class="long">Nouvelle dépense</span><span class="court">Dépense</span></button>'+
     '<button class="btn" onclick="ouvrirBail()">'+ico('plus')+'<span class="long">Nouveau locataire</span><span class="court">Locataire</span></button>'+
@@ -1136,10 +1180,16 @@ function vueMois(m){
   h+='<div class="mois-detail"><div><div class="anneau">'+anneau([[vP,'#5E9C7A'],[vPa,'#D9B266'],[vI,'#C9706A']],tot)+'<div class="centre"><b class="som">'+pct+' %</b><span>encaissé</span></div></div>'+
     '<div class="legende" style="flex-direction:column;gap:4px;margin-top:10px"><span><i style="background:#5E9C7A"></i>'+nP+' payé(s)</span><span><i style="background:#D9B266"></i>'+nPa+' partiel(s)</span><span><i style="background:#C9706A"></i>'+nI+' impayé(s)</span></div></div>';
   h+='<div><div class="totaux-mois"><div><span>Total encaissé</span><b>'+usd(R.recu)+'</b></div><div><span>Total dû</span><b>'+usd(R.attendu)+'</b></div><div><span>Reste à percevoir</span><b style="color:'+(R.attendu-R.recu>0.009?'var(--ko)':'var(--ok)')+'">'+usd(R.attendu-R.recu)+'</b></div></div>'+
-    '<div class="barre-prog" role="progressbar" aria-valuenow="'+pct+'" aria-valuemin="0" aria-valuemax="100"><i style="width:'+Math.min(100,pct)+'%"></i></div><div style="font-size:12.5px;color:var(--doux)">Payable le '+fd(ds(echeance(m,{jour:P.jourDefaut})))+' · touche un locataire pour ouvrir ses relevés</div>';
+    '<div class="barre-prog" role="progressbar" aria-valuenow="'+pct+'" aria-valuemin="0" aria-valuemax="100"><i style="width:'+Math.min(100,pct)+'%"></i></div><div style="font-size:12.5px;color:var(--doux)">Payable le '+fd(ds(echeance(m,{jour:P.jourDefaut})))+' · touche un locataire pour ouvrir ses relevés</div>'+facturesMois(m);
   h+='<div class="liste-locaux">'+R.lignes.map(function(x){var l=x.l;
     return '<button onclick="voirReleve(\''+x.b.id+'\')"><span><span class="nom"><b>'+x.b.local+'</b> '+esc(nomBail(x.b))+'</span><span class="sous">'+(x.pj.length?'payé le '+x.pj.map(function(j){return fd(j.date)}).join(', '):'aucun paiement')+(l.ded.length?' · '+usdT(l.ded.reduce(function(s,d){return s+d.v},0))+' déduits':'')+'</span></span><span style="text-align:right;flex:none">'+pastilleMois(l)+(l.reste>0?'<span class="sous som" style="color:var(--ko)">reste '+usdTxt(l.reste)+'</span>':'')+'</span></button>';}).join('')+'</div></div></div>';
   return h;
+}
+/** Factures SNEL / Regideso du mois saisies en dépenses : combien de locataires ont payé leur part. */
+function facturesMois(m){
+  var L=FC.filter(function(F){return F.m===m});if(!L.length)return '';
+  return '<div class="factures-mois"><div class="titre-f">Factures communes de '+mLib(m)+'</div>'+L.map(function(F){var st=etatFacture(F),np=F.n-st.payes;
+    return '<button onclick="ouvrirFacture(\''+F.j.id+'\')"><span><b>'+F.nature+'</b> · '+mont(F.j.montant,F.devise)+'<span class="sous">'+st.payes+' ont payé leur part'+(np?' · '+np+' pas encore':'')+'</span></span><span style="text-align:right;flex:none">'+(st.reste>0.5?'<span class="pastille p-ko">reste '+montT(st.reste,F.devise)+'</span>':'<span class="pastille p-ok">Tout payé</span>')+'</span></button>';}).join('')+'</div>';
 }
 function anneau(parts,tot){
   var R=78,C=2*Math.PI*R,off=0,s='<svg viewBox="0 0 190 190" width="190" height="190" role="img" aria-label="Répartition des loyers du mois"><circle cx="95" cy="95" r="'+R+'" fill="none" stroke="var(--gris-fond)" stroke-width="20"/>';
@@ -1284,7 +1334,7 @@ function recuPret(r){var recs=((r.delta||{}).recs||[]).filter(function(x){return
 VUES.depenses=function(){
   var h=entete('Dépenses et factures','Entretien, taxes, autres frais, et les factures SNEL et Regideso communes, réparties entre les locaux occupés.');
   h+='<div class="grille g2"><div class="carte"><h2>Nouvelle dépense ou facture</h2><form id="fDep" onsubmit="depValider(event)" onchange="depMaj()" oninput="depMaj()"><div class="champs">'+
-    '<label class="ch">Type<select name="type"><option>Entretien</option><option>SNEL payée</option><option>Regideso payée</option><option>Taxe</option><option>Autre dépense</option></select></label>'+
+    '<label class="ch">Type<select name="type"><option>Entretien</option><option>SNEL payée</option><option>Regideso payée</option><option>Taxe</option><option>Autre dépense</option><option value="__pref">Travaux préfinancés par un locataire</option></select></label>'+
     '<label class="ch">Pour quel local ?<select name="local">'+optsLocaux('','Tout le complexe')+'</select></label>'+
     '<label class="ch plein"><span id="txtDetail">Détail</span><input name="commentaire" placeholder="Ex. : réparation de la porte"></label>'+
     '<label class="ch">Montant<div style="display:flex;gap:6px"><input name="montant" type="number" inputmode="decimal" step="0.01" min="0" required style="flex:1"><select name="devise"><option>USD</option><option>CDF</option></select></div></label>'+
@@ -1295,6 +1345,7 @@ VUES.depenses=function(){
     '</div><div class="reste-info" id="aideDep" style="display:none"></div><div style="display:flex;justify-content:flex-end;margin-top:16px"><button class="btn prim">Enregistrer</button></div></form></div>';
   var dep=D.journal.filter(function(j){return (TYPES[j.type]||{}).sens<0}).sort(function(a,b){return String(b.date).localeCompare(String(a.date))}).slice(0,25);
   h+='<div class="carte"><h2>Dernières dépenses</h2>'+(dep.length?tableOps(dep,true):'<div class="vide">Aucune dépense enregistrée pour l\'instant.</div>')+'</div></div>';
+  h+=cartePrefs();
   h+='<div class="carte mt"><h2>Factures SNEL et Regideso communes</h2>'+(FC.length?'<div class="tab-wrap"><table class="t"><thead><tr><th>Mois</th><th>Facture</th><th class="d">Montant total</th><th class="d">Locaux occupés</th><th class="d">Part par local</th><th class="d">Ont payé</th><th class="d">Reste à percevoir</th></tr></thead><tbody>'+
     FC.map(function(F,i){var st=etatFacture(F);return '<tr class="cliq'+(i%2?' z':'')+'" onclick="ouvrirFacture(\''+F.j.id+'\')"><td>'+mLib(F.m)+attenteIco(F.j)+'</td><td>'+F.nature+'</td><td class="d">'+mont(F.j.montant,F.devise)+'</td><td class="d">'+F.n+'</td><td class="d">'+mont(F.partMont,F.devise)+'</td><td class="d">'+st.payes+' / '+F.n+'</td><td class="d'+(st.reste>0.5?' neg':'')+'">'+mont(st.reste,F.devise)+'</td></tr>'}).join('')+'</tbody></table></div>':'<div class="vide">Aucune facture commune pour l\'instant. Saisis la facture du mois avec le type « SNEL payée » ou « Regideso payée » et « Tout le complexe » : elle sera répartie entre les locaux occupés.</div>')+'</div>';
   return h;
@@ -1310,7 +1361,7 @@ function ouvrirFacture(jid){
   c+='<p class="muet" style="font-size:13px">Locaux occupés en '+mLib(F.m)+' : même règle que pour les loyers (entré après le 15 = à partir du mois suivant ; parti avant le 15 = mois non compté).</p>';
   fenetre('Facture '+F.nature+' commune',c,'<button class="btn gauche danger" onclick="supprimer(\'Journal\',\''+F.j.id+'\',\'cette facture\')">Supprimer</button><button class="btn" onclick="editerOp(\''+F.j.id+'\')">Modifier la facture</button><button class="btn prim" onclick="fermer()">Fermer</button>',true);
 }
-function depMaj(){var f=document.getElementById('fDep');if(!f)return;var t=f.type.value,charge=t==='SNEL payée'||t==='Regideso payée',z=document.getElementById('aideDep');
+function depMaj(){var f=document.getElementById('fDep');if(!f)return;if(f.type.value==='__pref'){f.type.value='Entretien';ouvrirPref(null);return;}var t=f.type.value,charge=t==='SNEL payée'||t==='Regideso payée',z=document.getElementById('aideDep');
   if(f.dataset.t!==t){if(charge)f.devise.value='CDF';else if(f.dataset.t)f.devise.value='USD';f.dataset.t=t;}
   var autre=t==='Autre dépense';document.getElementById('txtDetail').textContent=autre?'De quoi s\'agit-il ? (obligatoire)':'Détail';
   f.commentaire.required=autre;f.commentaire.placeholder=autre?'Ex. : achat d\'un cadenas, frais de gardiennage…':'Ex. : réparation de la porte, facture n°…';
@@ -1411,9 +1462,20 @@ function ouvrirFicheBail(id){
     (b.statut==='Actif'?'<button class="btn" onclick="ouvrirSortie(\''+id+'\')">'+ico('sortie')+'Sortie</button><button class="btn prim" onclick="fermer();aller(\'encaisser\',{enc:{bail:\''+id+'\',genre:\'complet\',_init:true}})">'+ico('encaisser')+'Encaisser</button>'
       :(s.g.solde>0.009?'<button class="btn prim" onclick="ouvrirSortie(\''+id+'\')">Régler la garantie</button>':'')+(s.dette>0.009?'<button class="btn prim" onclick="fermer();V.vue=\'encaisser\';encBail(\''+id+'\')">Encaisser sa dette</button>':'')),true);
 }
+/** Dépenses : les travaux payés par un locataire, remboursés en déduisant une somme de son loyer chaque mois. */
+function cartePrefs(){
+  var L=[];D.baux.forEach(function(b){(ST[b.id]?ST[b.id].prefs:[]).forEach(function(x){L.push({b:b,x:x})})});
+  L.sort(function(a,b){return (b.x.reste>0.009)-(a.x.reste>0.009)||a.b.local.localeCompare(b.b.local)});
+  var h='<div class="carte mt"><div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px"><h2 style="margin:0">Travaux préfinancés par un locataire</h2><button class="btn" onclick="ouvrirPref(null)">'+ico('plus')+'Noter des travaux préfinancés</button></div>'+
+    '<p style="margin:0 0 12px;color:var(--doux);font-size:14px">Le locataire paie lui-même des travaux du local. Tu le rembourses en retirant une somme de son loyer chaque mois. Exemple : loyer de 80 $, déduction de 20 $. Il ne paie que 60 $, et le mois compte quand même comme payé. <b>À l\'encaissement, note seulement ce qu\'il donne vraiment (60 $)</b> : les 20 $ sont déduits tout seuls, mois après mois, jusqu\'à ce que la somme avancée soit remboursée.</p>';
+  if(!L.length)return h+'<div class="vide" style="padding:16px">Aucun préfinancement noté pour l\'instant.</div></div>';
+  var tel=estTel();
+  return h+'<div class="tab-wrap"><table class="t rel"><thead><tr><th>Local</th><th>Locataire</th><th class="x-mob">Travaux</th><th class="d x-mob">Avancé</th><th class="d">Par mois</th><th class="d">Reste</th><th>Fin</th></tr></thead><tbody>'+
+    L.map(function(o,i){var x=o.x;return '<tr class="cliq'+(i%2?' z':'')+'" onclick="ouvrirPref(\''+x.p.id+'\')"><td><b>'+o.b.local+'</b></td><td><div class="ell">'+esc(nomBail(o.b))+'</div></td><td class="x-mob"><div class="ell">'+esc(x.p.objet)+'</div></td><td class="d x-mob">'+usd(x.p.total)+'</td><td class="d">'+usd(x.p.deduction)+'</td><td class="d"><b>'+usd(x.reste)+'</b></td><td>'+(x.reste>0.009?(tel?MOISC[+x.finPrevue.slice(5,7)-1]+' '+x.finPrevue.slice(2,4):mLib(x.finPrevue)):'<span class="pastille p-ok">Fini</span>')+'</td></tr>'}).join('')+'</tbody></table></div></div>';
+}
 function ouvrirPref(id,bid){
   var p=id?D.prefinancements.find(function(x){return x.id===id}):{id:'',bail:bid,local:(bail(bid)||{}).local,objet:'',total:'',deduction:'',premierMois:mk(TODAY())+'-01',date:TODAY(),notes:''};
-  fenetre(id?'Travaux préfinancés '+id:'Travaux préfinancés par le locataire','<p style="margin-top:0;color:var(--doux)">Le locataire a payé un achat pour le local. Tu le rembourses en déduisant chaque mois une somme de son loyer.</p><form id="fPref" onsubmit="prefValider(event,\''+(id||'')+'\')"><div class="champs">'+
+  fenetre(id?'Travaux préfinancés '+id:'Travaux préfinancés par le locataire','<p style="margin-top:0;color:var(--doux)">Le locataire a payé un achat pour le local. Tu le rembourses en déduisant chaque mois une somme de son loyer : dès le premier mois indiqué, ses loyers sont réduits d\'autant, sans rien faire d\'autre. À l\'encaissement, note seulement ce qu\'il paie vraiment.</p><p style="margin-top:0;color:var(--doux);font-size:13.5px">Si les déductions avaient déjà commencé avant le début du suivi dans l\'appli, indique comme montant ce qui restait à rembourser à ce moment-là, et comme premier mois le premier mois suivi.</p><form id="fPref" onsubmit="prefValider(event,\''+(id||'')+'\')"><div class="champs">'+
     '<label class="ch plein">Locataire<select name="bail">'+optsBaux(p.bail)+'</select></label>'+
     '<label class="ch plein">Quel achat ?<input name="objet" value="'+esc(p.objet)+'" required placeholder="Ex. : achat d\'une cuve"></label>'+
     '<label class="ch">Montant total avancé (USD)<input type="number" inputmode="decimal" step="0.01" name="total" value="'+esc(p.total)+'" required></label>'+

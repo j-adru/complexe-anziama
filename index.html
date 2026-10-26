@@ -305,6 +305,7 @@ label.ch .aide{font-weight:400;color:var(--pale);font-size:12.5px}
 .rel-tete>div{white-space:nowrap}
 .rel-tete span{display:block;color:var(--doux);font-size:12.5px}
 table.t.rel td{white-space:nowrap}
+table.t.rel .m-c{display:none}
 .rel-totaux{margin:14px 0 0 auto;width:fit-content;min-width:320px;max-width:100%;font-size:14px}
 .rel-totaux>div{display:flex;justify-content:space-between;gap:24px;padding:7px 12px;border-bottom:1px solid var(--trait2);white-space:nowrap}
 .rel-totaux>div b{font-variant-numeric:tabular-nums}
@@ -400,6 +401,25 @@ table.t.rel td{white-space:nowrap}
   table.t tr.nonpaye{background:var(--ko-fond)}
   table.t tr.nonpaye td{background:none}
   table.t tr.detail td{display:block;padding:4px 0 6px;text-align:left}
+  /* Relevés sur téléphone : vrai tableau compact, une ligne par mois (Mois, Dû, Payé, Reste, Statut) */
+  table.t.rel{display:table;width:100%;font-size:13.5px}
+  table.t.rel thead{display:table-header-group}
+  table.t.rel tbody{display:table-row-group}
+  table.t.rel tr{display:table-row;padding:0;border:0}
+  table.t.rel th{padding:9px 6px;position:static}
+  table.t.rel td{display:table-cell;padding:11px 6px;border-bottom:1px solid var(--trait2);text-align:left;white-space:nowrap!important;vertical-align:middle}
+  table.t.rel th:first-child,table.t.rel td:first-child{padding-left:10px}
+  table.t.rel th:last-child,table.t.rel td:last-child{padding-right:10px}
+  table.t.rel td.d,table.t.rel th.d{text-align:right}
+  table.t.rel td::before{display:none}
+  table.t.rel tr.z td{background:var(--ligne-alt)}
+  table.t.rel .x-mob,table.t.rel tr.detail{display:none!important}
+  table.t.rel .m-l{display:none}
+  table.t.rel .m-c{display:inline}
+  table.t.rel .pastille{font-size:12px;padding:2px 8px}
+  .rel-totaux{width:auto;min-width:0}
+  .rel-totaux>div{white-space:normal}
+  .rel-totaux>div b{white-space:nowrap}
 }
 </style>
 </head>
@@ -1518,13 +1538,13 @@ function basculerDet(btn,id,n){var r=document.getElementById(id);if(!r)return;r.
 function tableLoyers(L,avecLocataire){
   if(!L.length)return '<div class="tab-wrap"><div class="vide">Aucun mois sur cette période.</div></div>';
   L=L.slice().sort(function(a,b){return b.m.localeCompare(a.m)||a.b.local.localeCompare(b.b.local)});
-  var nc=avecLocataire?8:7,tD=0,tP=0,tR=0,mm=[],h='<div class="tab-wrap"><table class="t rel"><thead><tr><th>Mois</th>'+(avecLocataire?'<th>Locataire</th>':'')+'<th>À payer le</th><th class="d">Dû</th><th class="d">Payé</th><th class="d">Reste</th><th>Statut</th><th>Paiements</th></tr></thead><tbody>';
+  var nc=avecLocataire?8:7,tD=0,tP=0,tR=0,mm=[],h='<div class="tab-wrap"><table class="t rel"><thead><tr><th>Mois</th>'+(avecLocataire?'<th class="x-mob">Locataire</th>':'')+'<th class="x-mob">À payer le</th><th class="d">Dû</th><th class="d">Payé</th><th class="d">Reste</th><th>Statut</th><th class="x-mob">Paiements</th></tr></thead><tbody>';
   L.forEach(function(l,i){if(!l.avance)mm.push(l.m);tD+=l.avance?0:l.du;tP+=l.avance?0:l.paye;tR+=l.avance?0:l.reste;var n=l.pj.length+l.ded.length,id='det'+(++DET_N),paie;
     var details=l.pj.map(function(j){return '<div>'+esc(libPaiement(j))+' — <b>'+mont(j.montant,j.devise)+'</b>'+(j.recu&&!j._attente?' · <a href="#" onclick="ouvrirRecu([\''+j.id+'\']);return false">voir le reçu</a>':'')+'</div>'}).concat(l.ded.map(function(d){return '<div>Déduction travaux préfinancés ('+esc(d.p.objet)+') — <b>'+usd(d.v)+'</b></div>'}));
     if(!n)paie='<span class="muet">—</span>';
     else if(n===1)paie='<span style="font-size:13px">'+(l.pj[0]?esc(libPaiement(l.pj[0])):'Déduction travaux ('+esc(l.ded[0].p.objet)+')')+'</span>';
     else paie='<button class="lien-det" onclick="basculerDet(this,\''+id+'\','+n+')">Payé en '+n+' fois ▸</button>';
-    h+='<tr class="'+(i%2?'z':'')+'"><td><b>'+mLib(l.m)+'</b></td>'+(avecLocataire?'<td>'+esc(nomBail(l.b))+' <span class="idb">'+l.b.id+'</span></td>':'')+'<td>'+fd(ds(echeance(l.m,l.b)))+'</td><td class="d">'+usd(l.du)+'</td><td class="d">'+usd(l.paye)+'</td><td class="d'+(l.reste>0.009?' neg':'')+'">'+usd(l.reste)+'</td><td>'+pastilleMois(l)+'</td><td>'+paie+'</td></tr>';
+    h+='<tr class="'+(i%2?'z':'')+'"><td><b><span class="m-l">'+mLib(l.m)+'</span><span class="m-c">'+MOISC[+l.m.slice(5,7)-1]+' '+l.m.slice(2,4)+'</span></b></td>'+(avecLocataire?'<td class="x-mob">'+esc(nomBail(l.b))+' <span class="idb">'+l.b.id+'</span></td>':'')+'<td class="x-mob">'+fd(ds(echeance(l.m,l.b)))+'</td><td class="d">'+usd(l.du)+'</td><td class="d">'+usd(l.paye)+'</td><td class="d'+(l.reste>0.009?' neg':'')+'">'+usd(l.reste)+'</td><td>'+pastilleMois(l)+'</td><td class="x-mob">'+paie+'</td></tr>';
     if(n>1)h+='<tr class="detail" id="'+id+'" hidden><td colspan="'+nc+'">'+details.join('')+'</td></tr>';
   });
   mm.sort();var per=!mm.length?'':mm[0]===mm[mm.length-1]?' ('+mLib(mm[0])+')':' ('+mLib(mm[0])+' – '+mLib(mm[mm.length-1])+')';

@@ -2,7 +2,7 @@
    La page et les icônes sont gardées sur l'appareil. À chaque ouverture avec réseau,
    la dernière version est prise si elle arrive vite ; sinon la copie gardée s'ouvre tout de suite.
    Les échanges avec Google (données) ne passent pas par ici : l'appli les gère elle-même. */
-var CACHE = 'anziama-v4';
+var CACHE = 'anziama-v5';
 var FICHIERS = ['./', 'index.html', 'manifest.webmanifest', 'icon-192.png?v=2', 'icon-512.png?v=2',
                 'icon-maskable-512.png?v=2', 'apple-touch-icon.png?v=2'];
 var ATTENTE_MAX = 3000;   // au-delà, on ouvre la copie gardée (connexion lente)

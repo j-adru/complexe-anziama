@@ -226,11 +226,11 @@ table.t tr.detail[hidden]{display:none}
 .champs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px 16px}
 .champs .plein{grid-column:1/-1}
 /* Préfinancement : une ligne par type de travaux (type, devis, versé, retirer) */
-.pl-ligne{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1fr) minmax(0,1fr) 40px;gap:8px;align-items:end;padding:10px 0;border-bottom:1px solid var(--trait2)}
-.pl-ligne .pl-autre{grid-column:1/4}
+.pl-ligne{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1fr) 40px;gap:8px;align-items:end;padding:10px 0;border-bottom:1px solid var(--trait2)}
+.pl-ligne .pl-autre{grid-column:1/3}
 .pl-ligne .pl-x{height:42px;width:40px;padding:0;justify-content:center}
 .pl-ajout{margin-top:10px}
-@media (max-width:700px){.pl-ligne{grid-template-columns:minmax(0,1fr) minmax(0,1fr) 40px}.pl-ligne .pl-type{grid-column:1/-1}.pl-ligne .pl-autre{grid-column:1/-1}}
+@media (max-width:700px){.pl-ligne{grid-template-columns:minmax(0,1fr) 40px}.pl-ligne .pl-type{grid-column:1/-1}.pl-ligne .pl-autre{grid-column:1/-1}}
 label.ch{display:flex;flex-direction:column;gap:5px;font-size:13.5px;color:var(--doux);font-weight:500}
 label.ch input,label.ch select,label.ch textarea,.filtre select,.filtre input,.mini-champ{border:1px solid var(--champ-bord);border-radius:10px;padding:10px 11px;background:var(--champ);color:var(--texte);font-size:15px;min-width:0}
 select option{background:#fff;color:#18202E}
@@ -1533,8 +1533,8 @@ function cartePrefs(){
     '<p style="margin:0 0 12px;color:var(--doux);font-size:14px">Le locataire paie lui-même des travaux du local. Tu le rembourses en retenant une somme sur son loyer chaque mois, jusqu\'à ce que ce qu\'il a versé soit rendu. Exemple : loyer de 80 $, retenue de 20 $ : il ne paie que 60 $ et le mois compte comme payé. <b>À l\'encaissement, note seulement ce qu\'il donne vraiment (60 $).</b></p>';
   if(!L.length)return h+'<div class="vide" style="padding:16px">Aucun préfinancement noté pour l\'instant.</div></div>';
   var tel=estTel();
-  return h+'<div class="tab-wrap"><table class="t'+(estTel()?' rel':'')+'"><thead><tr><th>Local</th><th class="x-mob">Locataire</th><th>Travaux</th><th class="d x-mob">Devis</th><th class="d x-mob">Versé</th><th class="d x-mob">Retenue / mois</th><th class="d x-mob">Déjà retenu</th><th class="d">Reste</th><th>'+(tel?'Normal dès':'Loyer normal dès')+'</th></tr></thead><tbody>'+
-    L.map(function(o,i){var x=o.x;return '<tr class="cliq'+(i%2?' z':'')+'" onclick="ouvrirPref(\''+x.p.id+'\')"><td><b>'+o.b.local+'</b></td><td class="x-mob"><div class="ell">'+esc(nomBail(o.b))+'</div></td><td><div class="ell"'+(tel?' style="max-width:110px"':'')+'>'+esc(prefLib(x.p))+'</div>'+(x.p.nature&&x.p.objet?'<div class="muet x-mob" style="font-size:12.5px">'+esc(x.p.objet)+'</div>':'')+'</td><td class="d x-mob">'+(n2(x.p.devis)?usd(x.p.devis):'<span class="muet">—</span>')+'</td><td class="d x-mob">'+usd(n2(x.p.verse)||x.p.total)+(n2(x.p.compense)?'<div class="muet" style="font-size:12px">dont '+usdTxt(x.p.compense)+' compensés</div>':'')+'</td><td class="d x-mob">'+usd(x.p.deduction)+'</td><td class="d x-mob">'+usd(x.deduit)+'</td><td class="d"><b>'+usd(x.reste)+'</b></td><td>'+prefFinAff(x,tel)+'</td></tr>'}).join('')+'</tbody></table></div></div>';
+  return h+'<div class="tab-wrap"><table class="t'+(estTel()?' rel':'')+'"><thead><tr><th>Local</th><th class="x-mob">Locataire</th><th>Travaux</th><th class="d x-mob">Montant</th><th class="d x-mob">Retenue / mois</th><th class="d x-mob">Déjà retenu</th><th class="d">Reste</th><th>'+(tel?'Normal dès':'Loyer normal dès')+'</th></tr></thead><tbody>'+
+    L.map(function(o,i){var x=o.x;return '<tr class="cliq'+(i%2?' z':'')+'" onclick="ouvrirPref(\''+x.p.id+'\')"><td><b>'+o.b.local+'</b></td><td class="x-mob"><div class="ell">'+esc(nomBail(o.b))+'</div></td><td><div class="ell"'+(tel?' style="max-width:110px"':'')+'>'+esc(prefLib(x.p))+'</div>'+(x.p.nature&&x.p.objet?'<div class="muet x-mob" style="font-size:12.5px">'+esc(x.p.objet)+'</div>':'')+'</td><td class="d x-mob">'+usd(n2(x.p.verse)||x.p.total)+(n2(x.p.compense)?'<div class="muet" style="font-size:12px">dont '+usdTxt(x.p.compense)+' compensés</div>':'')+'</td><td class="d x-mob">'+usd(x.p.deduction)+'</td><td class="d x-mob">'+usd(x.deduit)+'</td><td class="d"><b>'+usd(x.reste)+'</b></td><td>'+prefFinAff(x,tel)+'</td></tr>'}).join('')+'</tbody></table></div></div>';
 }
 /** Lignes de travaux d'un préfinancement. Rangées dans le tableur sous la forme « Type = devis / versé ; … ». */
 function prefLignes(p){
@@ -1546,8 +1546,7 @@ function prefLigneHtml(l){
   var autre=l.type&&TYPES_TRAVAUX.indexOf(l.type)<0;
   return '<div class="pl-ligne"><label class="ch pl-type">Type de travaux<select class="t-type" onchange="prefApercu()"><option value="">— Choisir —</option>'+TYPES_TRAVAUX.map(function(t){return '<option'+(l.type===t?' selected':'')+'>'+esc(t)+'</option>'}).join('')+'<option value="__autre"'+(autre?' selected':'')+'>Autre (à écrire)</option></select></label>'+
     '<label class="ch pl-autre"'+(autre?'':' style="display:none"')+'>Quels travaux ?<input class="t-autre" value="'+(autre?esc(l.type):'')+'" placeholder="Ex. : toiture, peinture façade…"></label>'+
-    '<label class="ch">Devis ($)<input class="t-devis" type="number" inputmode="decimal" step="0.01" min="0" value="'+esc(l.devis||'')+'" placeholder="—"></label>'+
-    '<label class="ch">Versé ($)<input class="t-verse" type="number" inputmode="decimal" step="0.01" min="0" value="'+esc(l.verse||'')+'"></label>'+
+    '<label class="ch">Montant du devis ($)<input class="t-verse" type="number" inputmode="decimal" step="0.01" min="0" value="'+esc(l.verse||l.devis||'')+'"></label>'+
     '<button type="button" class="btn pl-x" title="Retirer cette ligne" aria-label="Retirer cette ligne" onclick="prefRetirer(this)">×</button></div>';
 }
 function prefAjouter(){var z=document.getElementById('prefLignes');z.insertAdjacentHTML('beforeend',prefLigneHtml({}));ameliorer(z);prefApercu();}
@@ -1558,7 +1557,7 @@ function prefLire(){
     var sel=d.querySelector('.t-type').value,autre=d.querySelector('.t-autre');
     d.querySelector('.pl-autre').style.display=sel==='__autre'?'':'none';
     var type=(sel==='__autre'?autre.value.trim():sel).replace(/[=;\/]/g,'-');
-    return {type:type,devis:n2(d.querySelector('.t-devis').value),verse:n2(d.querySelector('.t-verse').value),choisi:!!sel};
+    var m=n2(d.querySelector('.t-verse').value);return {type:type,devis:m,verse:m,choisi:!!sel};
   });
 }
 function ouvrirPref(id,bid){
@@ -1587,10 +1586,8 @@ function prefApercu(){
   var comp=n2(f.compense.value),tot=r2(verse-comp),b=bail(f.bail.value),per=n2(f.deduction.value),m0=f.premierMois.value;
   var l=function(a,v,cl){return '<div class="l'+(cl?' '+cl:'')+'"><span>'+a+'</span><span class="m">'+v+'</span></div>'};
   var h='';
-  if(L.length>1)h+=L.map(function(x){return l(esc(x.type||'(type à choisir)'),usd(x.verse)+(x.devis&&Math.abs(x.devis-x.verse)>0.009?' <span class="muet" style="font-size:12.5px">(devis '+usdTxt(x.devis)+')</span>':''))}).join('');
-  if(devis)h+=l('Total des devis',usd(devis));
-  h+=l('Total versé par le locataire',usd(verse),L.length>1?'s':'');
-  if(devis&&Math.abs(devis-verse)>0.009)h+=l(verse<devis?'Pas encore versé sur les devis':'Versé en plus des devis',usd(Math.abs(r2(devis-verse))));
+  if(L.length>1)h+=L.map(function(x){return l(esc(x.type||'(type à choisir)'),usd(x.verse))}).join('');
+  h+=l('Total des travaux payés par le locataire',usd(verse),L.length>1?'s':'');
   if(comp)h+=l('Déjà compensé (somme qu\'il te devait)','− '+usd(comp))+l('À lui rendre sur les loyers',usd(Math.max(0,tot)),'s');
   if(!(tot>0&&per>0&&m0)){z.innerHTML=h+l(tot<-0.009?'<span class="neg">C\'est lui qui te doit '+usdTxt(-tot)+'</span>':'Remplis les montants, la retenue par mois et le premier mois','');return;}
   var tel=estTel(),ml=function(m){return tel?moisCourt(m):mLib(m)};
@@ -2150,9 +2147,9 @@ function travauxDuLocal(k){
   var tP=0,tA=0,tD=0;L.forEach(function(x){if(!x.compte)return;if(x.paye)tP+=x.usd;else tA+=x.usd;tD+=n2(x.t.devis)});
   var lo=k?local(k):null;
   var c='<p style="margin-top:0;color:var(--doux)">'+(k?esc((lo&&lo.description)||''):'Parties communes et travaux de tout le complexe')+'. Touche une ligne pour la modifier.</p>'+
-    '<div class="tab-wrap"><table class="t'+(tel?' rel':'')+'"><thead><tr><th>Travaux</th><th class="x-mob">Mois</th><th class="d">Devis</th><th class="d">Prix</th><th class="x-mob">État</th></tr></thead><tbody>'+
-    L.map(function(x,i){var tr=x.t,dv=n2(tr.devis);return '<tr class="cliq'+(i%2?' z':'')+'" onclick="'+(x.pref?'ouvrirPref':'ouvrirTravaux')+'(\''+tr.id+'\')"><td><div class="ell" style="max-width:'+(tel?'150px':'320px')+'">'+esc(tr.objet||tr.categorie)+'</div><span class="sous muet" style="font-size:12px">'+esc(tr.categorie||'')+(x.pref?' · préfinancé':'')+(tel&&!x.paye?' · <b>à venir</b>':'')+'</span></td><td class="x-mob">'+(tr.mois?mLib(mk(tr.mois)):'—')+'</td><td class="d">'+(dv?usd(dv):'<span class="muet">—</span>')+'</td><td class="d'+(x.compte?'':' muet')+'">'+mont(n2(tr.montant),tr.devise)+'</td><td class="x-mob">'+(x.paye?'<span class="pastille p-ok">Payé</span>':'<span class="pastille p-att">À venir</span>')+'</td></tr>'}).join('')+
-    '<tr class="tot"><td>Total</td><td class="x-mob"></td><td class="d" style="white-space:nowrap">'+(tD?usd(tD):'')+'</td><td class="d" style="white-space:nowrap">'+usd(tP+tA)+'</td><td class="x-mob">'+(tA?'<span class="muet" style="font-size:12px">dont '+usdTxt(tA)+' à venir</span>':'')+'</td></tr></tbody></table></div>';
+    '<div class="tab-wrap"><table class="t'+(tel?' rel':'')+'"><thead><tr><th>Travaux</th><th class="x-mob">Mois</th><th class="d">Montant</th><th class="x-mob">État</th></tr></thead><tbody>'+
+    L.map(function(x,i){var tr=x.t;return '<tr class="cliq'+(i%2?' z':'')+'" onclick="'+(x.pref?'ouvrirPref':'ouvrirTravaux')+'(\''+tr.id+'\')"><td><div class="ell" style="max-width:'+(tel?'150px':'320px')+'">'+esc(tr.objet||tr.categorie)+'</div><span class="sous muet" style="font-size:12px">'+esc(tr.categorie||'')+(x.pref?' · préfinancé':'')+(tel&&!x.paye?' · <b>à venir</b>':'')+'</span></td><td class="x-mob">'+(tr.mois?mLib(mk(tr.mois)):'—')+'</td><td class="d'+(x.compte?'':' muet')+'">'+mont(n2(tr.montant),tr.devise)+'</td><td class="x-mob">'+(x.paye?'<span class="pastille p-ok">Payé</span>':'<span class="pastille p-att">À venir</span>')+'</td></tr>'}).join('')+
+    '<tr class="tot"><td>Total</td><td class="x-mob"></td><td class="d" style="white-space:nowrap">'+usd(tP+tA)+'</td><td class="x-mob">'+(tA?'<span class="muet" style="font-size:12px">dont '+usdTxt(tA)+' à venir</span>':'')+'</td></tr></tbody></table></div>';
   fenetre('Travaux — '+(k||'parties communes'),c,'<button class="btn gauche" onclick="ouvrirTravaux(null,\''+k+'\')">'+ico('plus')+'Ajouter des travaux</button><button class="btn prim" onclick="fermer()">Fermer</button>',true);
 }
 function detailConstruction(){

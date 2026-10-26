@@ -190,6 +190,11 @@ h1,h2{font-family:var(--f-titre),system-ui,sans-serif}
 .estime{display:inline-block;font-size:11.5px;color:var(--att);background:var(--att-fond);border-radius:4px;padding:0 5px;margin-left:5px;cursor:help}
 .attente-ico{display:inline-block;font-size:11px;color:var(--att);margin-left:6px;white-space:nowrap}
 .idb{font-size:12px;color:var(--pale);font-weight:500}
+.mrq-red{display:inline-block;font-size:10.5px;font-weight:600;line-height:1.35;color:var(--or);border:1px solid currentColor;border-radius:4px;padding:0 4px;margin-left:5px;vertical-align:1px;cursor:help}
+.badge-lecture{display:inline-flex;align-items:center;gap:5px;padding:4px 11px;border-radius:20px;font-size:12px;font-weight:600;color:var(--or);border:1px solid color-mix(in srgb,var(--or) 55%,transparent);white-space:nowrap}
+.btn.btn-choix{justify-content:flex-start;width:100%;text-align:left;height:auto;min-height:0;padding:12px 16px;white-space:normal}
+.btn.btn-choix svg{flex:none}.btn.btn-choix span{flex:1;min-width:0;line-height:1.35}
+.code-visiteur{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:17px;letter-spacing:1px}
 .neg{color:var(--ko)}
 .muet{color:var(--pale)}
 
@@ -607,7 +612,7 @@ table.t.rel .m-c{display:none}
 /* =========================================================
    Liaison avec Google Sheets
    ========================================================= */
-var VERSION_ATTENDUE='2.3';
+var VERSION_ATTENDUE='2.4';
 /* Appli installée (PC et téléphone) : elle n'est pas ouverte depuis Google, elle parle à Google par internet
    avec l'adresse de l'appli et le code secret, gardés sur cet appareil. */
 var APPLI_INSTALLEE=!(window.google&&google.script&&google.script.run);
@@ -615,6 +620,7 @@ function apiConf(){var c=lsGet('anziama_api');return c&&c.url&&c.cle?c:null}
 function call(fn){
   var args=Array.prototype.slice.call(arguments,1);
   return new Promise(function(res,rej){
+    if(LECTURE&&fn!=='getData'){rej(new Error('Accès en lecture seule : tu peux consulter, pas modifier.'));return;}
     var fini=false,minuterie=setTimeout(function(){if(!fini){fini=true;rej(new Error('NetworkError: délai dépassé'))}},45000);
     var ok=function(v){if(!fini){fini=true;clearTimeout(minuterie);res(v)}}, ko=function(e){if(!fini){fini=true;clearTimeout(minuterie);rej(e)}};
     if(window.google&&google.script&&google.script.run){var r=google.script.run.withSuccessHandler(ok).withFailureHandler(ko);r[fn].apply(r,args);}
@@ -743,11 +749,11 @@ function libOp(j){var l=LIB_TYPE[j.type]||j.type; if(j.type==='Autre dépense'&&
    Ce qui est affiché (D) = Dserv + FILE. Si Google refuse un changement,
    il est retiré de FILE : l'écran revient tout seul à l'état d'avant.
    ========================================================= */
-var Dserv=null,FILE=[],D=null,P={},ST={},FC=[],MASQUE=false,ENVOI=false,EN_LIGNE=true,DERNIER_CHARGEMENT=null,RELANCE=null,ERREUR_ENVOI='';
+var LECTURE=false,Dserv=null,FILE=[],D=null,P={},ST={},FC=[],MASQUE=false,ENVOI=false,EN_LIGNE=true,DERNIER_CHARGEMENT=null,RELANCE=null,ERREUR_ENVOI='';
 var MEDIAS={logo:lsGet('anziama_media_logo')||{},fond:lsGet('anziama_media_fond')||{}};
 try{MASQUE=localStorage.getItem('anziama_masque')==='1'}catch(e){}
 var V={vue:'accueil',annee:annee(),moisDet:'',ops:{annee:'tout',mois:'',local:'',bail:'',grp:'',groupe:'mois',q:'',np:'actuels'},rel:{mode:'bail',bail:'',local:'',annee:'tout',mois:''},loc:{filtre:'actifs',q:''},enc:{bail:'',genre:'complet'}};
-var CLE_TABLE={Locaux:'locaux',Baux:'baux',Journal:'journal',Prefinancements:'prefinancements',Travaux:'travaux'};
+var CLE_TABLE={Locaux:'locaux',Baux:'baux',Journal:'journal',Prefinancements:'prefinancements',Travaux:'travaux',Reductions:'reductions'};
 
 function appliquerLocale(d,op){
   if(op.kind==='save') op.list.forEach(function(x,i){
@@ -761,15 +767,15 @@ function appliquerLocale(d,op){
 }
 function reconstruire(){
   if(!Dserv)return;
-  var d=cloner(Dserv);d.prefinancements=d.prefinancements||[];d.travaux=d.travaux||[];d.modifs=d.modifs||[];
+  var d=cloner(Dserv);d.prefinancements=d.prefinancements||[];d.travaux=d.travaux||[];d.reductions=d.reductions||[];d.modifs=d.modifs||[];
   FILE.forEach(function(op){appliquerLocale(d,op)});
-  D=d;P=D.params||{};
+  D=d;P=D.params||{};LECTURE=D.role==='lecture';document.body.classList.toggle('lecture',LECTURE);
   D.locaux.sort(function(a,b){return a.id.localeCompare(b.id)});
   D.journal.forEach(function(j){j.usd=n2(j.usd);j.montant=n2(j.montant)});
   recalc();
 }
 function appliquerDelta(r){
-  var dl=r.delta||{};Dserv.modifs=Dserv.modifs||[];Dserv.travaux=Dserv.travaux||[];
+  var dl=r.delta||{};Dserv.modifs=Dserv.modifs||[];Dserv.travaux=Dserv.travaux||[];Dserv.reductions=Dserv.reductions||[];
   (dl.recs||[]).forEach(function(x){var t=Dserv[CLE_TABLE[x.table]];var i=t.findIndex(function(o){return o.id===x.rec.id});if(i>=0)t[i]=x.rec;else t.push(x.rec);});
   (dl.suppr||[]).forEach(function(x){var t=Dserv[CLE_TABLE[x.table]];var i=t.findIndex(function(o){return o.id===x.id});if(i>=0)t.splice(i,1);});
   var connus={};Dserv.modifs.forEach(function(m){connus[m.row]=1});
@@ -782,6 +788,7 @@ function sauverCache(){if(Dserv)lsSet('anziama_D',{v:VERSION_ATTENDUE,at:Date.no
 
 /** Enregistre un changement : l'écran change tout de suite, Google suit en arrière-plan. */
 function soumettre(op){
+  if(LECTURE){toast('Accès en lecture seule : tu peux consulter, pas modifier.',1);return null;}
   var json=JSON.stringify(op.list||op);
   if(/"…/.test(json)){toast('Un instant : la ligne précédente est encore en cours d\'envoi.',1);return null;}
   op.uid=op.uid||nouvelUid();op.essais=0;
@@ -836,6 +843,12 @@ function voirFile(){
    Calculs
    ========================================================= */
 function loyerUSD(b){return b.devise==='CDF'?n2(b.loyer)/n2(P.taux||1):n2(b.loyer)}
+/** Réduction de loyer en cours pour ce bail pendant le mois m (la plus récente si plusieurs). */
+function reductionMois(b,m){return (D.reductions||[]).filter(function(r){return r.bail===b.id&&mk(r.du)&&m>=mk(r.du)&&(!mk(r.au)||m<=mk(r.au))}).sort(function(x,y){return mk(y.du).localeCompare(mk(x.du))})[0]||null;}
+/** Loyer dû pour le mois m, en USD : le loyer du contrat, ou le loyer réduit pendant une réduction. */
+function loyerMois(b,m){var r=reductionMois(b,m);if(!r)return loyerUSD(b);return b.devise==='CDF'?n2(r.loyer)/n2(P.taux||1):n2(r.loyer);}
+/** Loyer à afficher aujourd'hui (réduit si une réduction est en cours). */
+function loyerAff(b){var m=mk(TODAY()),r=b.statut==='Actif'?reductionMois(b,m):null;return r?mont(r.loyer,b.devise)+' <span class="mrq-red" title="Loyer réduit : '+esc(montTxt(b.loyer,b.devise))+' au contrat'+(r.motif?' — '+esc(r.motif):'')+'">réduit</span>':mont(b.loyer,b.devise);}
 function jourP(b){return parseInt(b.jour,10)||parseInt(P.jourDefaut,10)||5}
 function echeance(m,b){var p=m.split('-').map(Number);return new Date(p[0],p[1],jourP(b))}
 function periode(j){return mk(j.mois)||mk(j.date)}
@@ -893,10 +906,10 @@ function calculBail(b,finForce){
     var resteReel=r2(n2(p.total)-deduit);if(resteReel>0.009&&per>0)finPrevue=addM(dernier,Math.ceil(resteReel/per));
     return {p:p,deduit:r2(deduit),reste:resteReel,finPrevue:finPrevue};
   });
-  var maint=new Date(),grace=parseInt(P.grace,10)||0;
-  var lignes=mf.mois.map(function(m){var paye=r2(credit[m]||0),reste=Math.max(0,r2(loyer-paye));
-    return {m:m,du:loyer,paye:paye,reste:reste,ded:ded[m]||[],statut:reste<=0.009?'payé':paye>0?'partiel':'impayé',retard:reste>0.009&&addJ(echeance(m,b),grace)<maint};});
-  var avance=Object.keys(creditJ).filter(function(m){return mf.mois.indexOf(m)<0&&m>dernier}).sort().map(function(m){return {m:m,du:loyer,paye:r2(credit[m]),reste:Math.max(0,r2(loyer-credit[m])),ded:ded[m]||[],statut:credit[m]>=loyer-0.009?'payé':'partiel',avance:true,complet:credit[m]>=loyer-0.009}});
+  var maint=new Date(),grace=parseInt(P.grace,10)||0,duM=function(m){return r2(loyerMois(b,m))};
+  var lignes=mf.mois.map(function(m){var du=duM(m),paye=r2(credit[m]||0),reste=Math.max(0,r2(du-paye));
+    return {m:m,du:du,red:du<r2(loyer)-0.009||du>r2(loyer)+0.009?reductionMois(b,m):null,paye:paye,reste:reste,ded:ded[m]||[],statut:reste<=0.009?'payé':paye>0?'partiel':'impayé',retard:reste>0.009&&addJ(echeance(m,b),grace)<maint};});
+  var avance=Object.keys(creditJ).filter(function(m){return mf.mois.indexOf(m)<0&&m>dernier}).sort().map(function(m){var du=duM(m);return {m:m,du:du,red:reductionMois(b,m),paye:r2(credit[m]),reste:Math.max(0,r2(du-credit[m])),ded:ded[m]||[],statut:credit[m]>=du-0.009?'payé':'partiel',avance:true,complet:credit[m]>=du-0.009}});
   var g={versee:n2(b.garantie),comp:0,prel:0,ret:0,remb:0},ch={payees:0,refact:0},rep={du:0,paye:0},ponct=[];
   J.forEach(function(j){var v=n2(j.usd);
     if(j.type==='Complément garantie')g.comp+=v;if(j.type==='Prélèvement garantie')g.prel+=v;
@@ -911,9 +924,10 @@ function calculBail(b,finForce){
   ch.reste=Math.max(0,r2(ch.payees-ch.refact));rep.reste=Math.max(0,r2(rep.du-rep.paye));
   var reste=r2(lignes.reduce(function(s,l){return s+l.reste},0));
   var prochain=(lignes.find(function(l){return l.reste>0.009})||{}).m;
-  if(!prochain){prochain=addM(dernier,1);while(credit[prochain]>=loyer-0.009)prochain=addM(prochain,1);if(mf.fin&&prochain>mf.fin)prochain=mf.fin;}
+  if(!prochain){prochain=addM(dernier,1);while(credit[prochain]>=duM(prochain)-0.009)prochain=addM(prochain,1);if(mf.fin&&prochain>mf.fin)prochain=mf.fin;}
   var moy=ponct.length?ponct.reduce(function(s,x){return s+x},0)/ponct.length:null;
-  return {b:b,loyer:loyer,lignes:lignes,reste:reste,nbImpayes:lignes.filter(function(l){return l.reste>0.009}).length,enRetard:lignes.some(function(l){return l.retard}),
+  var reds=(D.reductions||[]).filter(function(r){return r.bail===b.id}).sort(function(x,y){return mk(y.du).localeCompare(mk(x.du))});
+  return {b:b,loyer:loyer,duMois:duM,reds:reds,lignes:lignes,reste:reste,nbImpayes:lignes.filter(function(l){return l.reste>0.009}).length,enRetard:lignes.some(function(l){return l.retard}),
     g:g,ch:ch,rep:rep,parts:parts,dette:r2(reste+ch.reste+rep.reste),ponct:{n:ponct.length,moy:moy},prochain:prochain,J:J,credit:credit,creditJ:creditJ,ded:ded,prefs:prefs,avance:avance,mf:mf};
 }
 function ponctLib(p){
@@ -1010,8 +1024,20 @@ function luminanceImage(src){return new Promise(function(res){var i=new Image();
    Démarrage : d'abord la copie gardée sur l'appareil (affichage immédiat),
    puis Google en arrière-plan. Logo et fond ne sont retéléchargés que s'ils ont changé.
    ========================================================= */
+/** Lien d'invitation d'un visiteur : …/#visiteur=… (adresse Google + code visiteur), lu une fois puis effacé de la barre d'adresse. */
+function lireInvitation(){
+  var m=/[#&]visiteur=([^&]+)/.exec(location.hash||'');if(!m)return;
+  try{history.replaceState(null,'',location.pathname+location.search)}catch(e){}
+  var x;try{x=JSON.parse(atob(decodeURIComponent(m[1])))}catch(e){return}
+  if(!x||!/^https:\/\/script\.google\.com\/.+\/exec$/.test(x.u||'')||!x.c)return;
+  var avant=apiConf(),cache=lsGet('anziama_D');if(avant&&avant.url===x.u&&avant.cle===x.c)return;
+  if((lsGet('anziama_file')||[]).length){alert('Des changements de cet appareil ne sont pas encore envoyés à Google : le lien visiteur n\'a pas été appliqué.');return;}
+  if(avant&&!(cache&&cache.d&&cache.d.role==='lecture')&&!confirm('Cet appareil gère déjà les données. Le passer en visiteur (lecture seule) ?'))return;
+  lsSet('anziama_api',{url:x.u,cle:x.c});try{localStorage.removeItem('anziama_D')}catch(e){}
+}
 function demarrer(){
   appliquerTheme();
+  if(APPLI_INSTALLEE&&!window.MOCK_API)lireInvitation();
   if(APPLI_INSTALLEE&&!window.MOCK_API&&!apiConf()){ecranConnexion();return;}
   FILE=(lsGet('anziama_file')||[]).map(function(o){o.enVol=false;return o});
   var c=lsGet('anziama_D');
@@ -1029,7 +1055,7 @@ function chargerServeur(){
     if(d.version!==VERSION_ATTENDUE)toast('Attention : le programme Code.gs n\'est pas à jour (version '+(d.version||'1')+').',1);
     envoyer();
   }).catch(function(e){
-    if(estRefusCode(e)){ecranConnexion('Google refuse le code secret. Retape-le (menu 🏛 Complexe Anziama > Code secret de l\'appli installée, dans ton Google Sheets).');return;}
+    if(estRefusCode(e)){ecranConnexion('Google refuse ce code. Retape-le (menu 🏛 Complexe Anziama > Code secret de l\'appli installée, dans ton Google Sheets). Visiteur : demande le nouveau lien au propriétaire.');return;}
     EN_LIGNE=!estReseau(e);majEtat();
     if(!Dserv){document.getElementById('main').innerHTML='<div class="chargement"><div class="grand">ANZIAMA</div><div>Impossible de charger les données.</div><small>'+esc(e.message||e)+'</small><button class="btn prim" onclick="location.reload()">Réessayer</button>'+(APPLI_INSTALLEE&&!window.MOCK_API?'<button class="btn" style="margin-top:8px" onclick="ecranConnexion()">Changer l\'adresse ou le code secret</button>':'')+'</div>';}
     else toast(estReseau(e)?'Hors ligne : tu travailles sur la copie gardée sur cet appareil.':'Actualisation impossible : '+(e.message||e),1);
@@ -1045,7 +1071,7 @@ function ecranConnexion(msg){
     (msg?'<p style="color:var(--ko);margin-top:0">'+esc(msg)+'</p>':'<p style="margin-top:0;color:var(--doux)">À faire une seule fois sur cet appareil. Les deux informations se trouvent dans ton Google Sheets (voir le mode d\'emploi).</p>')+
     '<form onsubmit="validerConnexion(event)"><div class="champs">'+
     '<label class="ch plein">Adresse de l\'appli Google<input name="url" required inputmode="url" autocomplete="off" placeholder="https://script.google.com/macros/s/…/exec" value="'+esc(c.url||'')+'"><span class="aide">Elle commence par https://script.google.com et finit par /exec.</span></label>'+
-    '<label class="ch plein">Code secret<input name="cle" required autocomplete="off" autocapitalize="characters" placeholder="XXXX-XXXX-XXXX" value="'+esc(c.cle||'')+'"><span class="aide">Menu 🏛 Complexe Anziama &gt; Code secret de l\'appli installée.</span></label>'+
+    '<label class="ch plein">Code secret<input name="cle" required autocomplete="off" autocapitalize="characters" placeholder="XXXX-XXXX-XXXX" value="'+esc(c.cle||'')+'"><span class="aide">Menu 🏛 Complexe Anziama &gt; Code secret de l\'appli installée. Un visiteur tape le code visiteur (lecture seule).</span></label>'+
     '</div><div style="display:flex;justify-content:flex-end;gap:8px;margin-top:16px">'+(Dserv?'<button type="button" class="btn" onclick="location.reload()">Retour</button>':'')+'<button class="btn prim" id="btnConnexion">Relier</button></div></form></div>';
 }
 function validerConnexion(ev){
@@ -1094,23 +1120,25 @@ var MENU=[
   ['Système',[['modifs','Historique des modifications'],['params','Paramètres et apparence']]]
 ];
 var MENU_IC={accueil:'accueil',encaisser:'encaisser',depenses:'depense',locaux:'locaux',locataires:'locataires',garanties:'garanties',operations:'operations',releves:'releves',banque:'banque',modifs:'modifs',params:'params',construction:'construction'};
+/** Visiteur (lecture seule) : pas de saisie, pas d'historique ni de retour en arrière. */
+function menuVisible(){return LECTURE?MENU.map(function(g){return [g[0],g[1].filter(function(it){return ['encaisser','modifs'].indexOf(it[0])<0})]}):MENU;}
 function nav(){
-  document.getElementById('nav').innerHTML=MENU.map(function(g){return '<div class="groupe">'+g[0]+'</div>'+g[1].map(function(it){return '<button class="'+(V.vue===it[0]?'actif':'')+'" onclick="aller(\''+it[0]+'\')">'+ico(MENU_IC[it[0]])+it[1]+'</button>';}).join('');}).join('');
+  document.getElementById('nav').innerHTML=menuVisible().map(function(g){return '<div class="groupe">'+g[0]+'</div>'+g[1].map(function(it){return '<button class="'+(V.vue===it[0]?'actif':'')+'" onclick="aller(\''+it[0]+'\')">'+ico(MENU_IC[it[0]])+it[1]+'</button>';}).join('');}).join('');
   var t=themeChoisi(),logo=MEDIAS.logo&&MEDIAS.logo.data;
   document.getElementById('barre').innerHTML='<span class="marque-mob">'+(logo?'<img src="'+logo+'" alt="">':'')+'<b>'+esc(String(P.nom||'Complexe Anziama').replace(/^complexe\s+/i,'').toUpperCase())+'</b></span>'+
-    '<button class="etat" id="etatSync" onclick="voirFile()"></button>'+
-    (dernierLot()?'<button onclick="confirmerAnnulation(dernierLot())" title="Revenir en arrière sur le dernier enregistrement">'+ico('annuler')+'<span class="txt-btn">Annuler la dernière action</span></button>':'')+
+    (LECTURE?'<span class="badge-lecture" title="Tu peux consulter, pas modifier">'+ico('oeil')+'Lecture seule</span>':'<button class="etat" id="etatSync" onclick="voirFile()"></button>')+
+    (dernierLot()&&!LECTURE?'<button onclick="confirmerAnnulation(dernierLot())" title="Revenir en arrière sur le dernier enregistrement">'+ico('annuler')+'<span class="txt-btn">Annuler la dernière action</span></button>':'')+
     '<button onclick="actualiser()" title="Relire le Google Sheets">'+ico('actualiser')+'<span class="txt-btn">Actualiser</span></button>'+
     '<button onclick="basculerTheme()" title="Affichage : '+(t==='auto'?'comme l\'appareil':t==='dark'?'sombre':'clair')+' (toucher pour changer)">'+ico(t==='auto'?'auto':t==='dark'?'lune':'soleil')+'<span class="txt-btn">'+(t==='auto'?'Auto':t==='dark'?'Sombre':'Clair')+'</span></button>'+
     '<button onclick="basculerMasque()" title="Masquer ou afficher toutes les sommes" aria-pressed="'+MASQUE+'">'+ico(MASQUE?'oeilBarre':'oeil')+'<span class="txt-btn">'+(MASQUE?'Afficher les montants':'Masquer les montants')+'</span></button>';
-  var mob=[['accueil','Accueil'],['encaisser','Encaisser'],['operations','Opérations'],['releves','Relevés']];
+  var mob=[['accueil','Accueil'],LECTURE?['locaux','Locaux']:['encaisser','Encaisser'],['operations','Opérations'],['releves','Relevés']];
   document.getElementById('navmob').innerHTML=mob.map(function(it){return '<button class="'+(V.vue===it[0]?'actif':'')+'" onclick="aller(\''+it[0]+'\')">'+ico(MENU_IC[it[0]])+it[1]+'</button>'}).join('')+
-    '<button class="'+(['accueil','encaisser','operations','releves'].indexOf(V.vue)<0?'actif':'')+'" onclick="menuMobile()">'+ico('menu')+'Menu</button>';
+    '<button class="'+(mob.map(function(x){return x[0]}).indexOf(V.vue)<0?'actif':'')+'" onclick="menuMobile()">'+ico('menu')+'Menu</button>';
   document.body.classList.toggle('masque',MASQUE);majEtat();
 }
-function menuMobile(){fenetre('Menu','<div class="liste-alertes">'+MENU.map(function(g){return '<div style="font-size:12.5px;color:var(--doux);margin:8px 2px 0">'+g[0]+'</div>'+g[1].map(function(it){return '<button class="btn" style="justify-content:flex-start;width:100%" onclick="fermer();aller(\''+it[0]+'\')">'+ico(MENU_IC[it[0]])+it[1]+'</button>'}).join('')}).join('')+'</div>');}
+function menuMobile(){fenetre('Menu','<div class="liste-alertes">'+menuVisible().map(function(g){return '<div style="font-size:12.5px;color:var(--doux);margin:8px 2px 0">'+g[0]+'</div>'+g[1].map(function(it){return '<button class="btn" style="justify-content:flex-start;width:100%" onclick="fermer();aller(\''+it[0]+'\')">'+ico(MENU_IC[it[0]])+it[1]+'</button>'}).join('')}).join('')+'</div>');}
 function aller(v,opts){V.vue=v;if(opts)Object.keys(opts).forEach(function(k){V[k]=Object.assign(V[k]||{},opts[k])});rendre();window.scrollTo(0,0);}
-function rendre(){if(!D)return;nav();document.getElementById('main').innerHTML=(VUES[V.vue]||VUES.accueil)();if(V.vue==='encaisser')encMaj();if(V.vue==='depenses')depMaj();}
+function rendre(){if(!D)return;if(LECTURE&&(V.vue==='encaisser'||V.vue==='modifs'))V.vue='accueil';nav();document.getElementById('main').innerHTML=(VUES[V.vue]||VUES.accueil)();if(LECTURE)lectureSeule(document.getElementById('main'));if(V.vue==='encaisser')encMaj();if(V.vue==='depenses')depMaj();}
 /** Pour les mises à jour qui arrivent de Google : ne redessine pas l'écran pendant que tu remplis un formulaire. */
 function rendreSiLibre(){var ae=document.activeElement;if(ae&&ae.closest&&ae.closest('#main form, #main .filtres')){nav();return;}rendre();}
 function estTel(){return window.matchMedia?matchMedia('(max-width:860px)').matches:window.innerWidth<=860}
@@ -1251,7 +1279,7 @@ VUES.encaisser=function(){
   var b=bail(e.bail),s=ST[b.id];
   h+='<div class="carte mt"><h2>2. Qu\'est-ce qui a été payé ?</h2>';
   var lb=local(b.local)||{};
-  h+='<div class="infos-ligne"><div><span>Locataire</span><b>'+esc(nomBail(b))+'</b></div><div><span>Local</span><b>'+b.local+'</b>'+(lb.description?' · '+esc(lb.description):'')+'</div><div><span>Bail</span>'+b.id+'</div><div><span>Loyer</span><b class="num">'+mont(b.loyer,b.devise)+'</b></div><div><span>Reste dû</span><b class="num" style="color:'+(s.dette>0?'var(--ko)':'var(--ok)')+'">'+usd(s.dette)+'</b></div><div><span>Garantie en caisse</span><b class="num">'+usd(s.g.solde)+'</b></div></div>';
+  h+='<div class="infos-ligne"><div><span>Locataire</span><b>'+esc(nomBail(b))+'</b></div><div><span>Local</span><b>'+b.local+'</b>'+(lb.description?' · '+esc(lb.description):'')+'</div><div><span>Bail</span>'+b.id+'</div><div><span>Loyer</span><b class="num">'+loyerAff(b)+'</b></div><div><span>Reste dû</span><b class="num" style="color:'+(s.dette>0?'var(--ko)':'var(--ok)')+'">'+usd(s.dette)+'</b></div><div><span>Garantie en caisse</span><b class="num">'+usd(s.g.solde)+'</b></div></div>';
   var genres=b.statut==='Actif'?GENRES:GENRES.filter(function(g){return ['complet','partiel','charge','reparation'].indexOf(g[0])>=0});
   h+='<div class="choix" style="margin-bottom:18px">'+genres.map(function(g){return '<button class="'+(e.genre===g[0]?'on':'')+'" onclick="encGenre(\''+g[0]+'\')"><b>'+g[1]+'</b><span>'+g[2]+'</span></button>'}).join('')+'</div>';
   h+='<form id="fEnc" onsubmit="encValider(event)" oninput="encMaj()" onchange="encMaj()"><div class="champs">';
@@ -1265,7 +1293,7 @@ VUES.encaisser=function(){
   if(avecMois){
     var liste=[],m0=s.mf.debut,mfin=addM(mk(TODAY()),3);if(s.mf.fin&&mfin>s.mf.fin)mfin=s.mf.fin;
     for(var m=m0;m<=mfin;m=addM(m,1))liste.push(m);
-    h+='<label class="ch">Loyer du mois de<select name="mois" style="font-weight:600">'+liste.reverse().map(function(m){var c=s.credit[m]||0,r=Math.max(0,r2(s.loyer-c)),futur=s.mf.mois.indexOf(m)<0&&m>(s.mf.mois[s.mf.mois.length-1]||'');
+    h+='<label class="ch">Loyer du mois de<select name="mois" style="font-weight:600">'+liste.reverse().map(function(m){var c=s.credit[m]||0,r=Math.max(0,r2(s.duMois(m)-c)),futur=s.mf.mois.indexOf(m)<0&&m>(s.mf.mois[s.mf.mois.length-1]||'');
       var et=r<=0.009?' — déjà payé':c<=0.009?(futur?' — à venir':' — non payé'):' — reste '+usdT(r);return '<option value="'+m+'"'+(m===s.prochain?' selected':'')+'>'+mLib(m)+et+'</option>'}).join('')+'</select><span class="aide" id="aideMois"></span></label>';
   }
   if(e.genre==='complet')h+='<label class="ch">Nombre de mois payés<select name="nb">'+[1,2,3,4,5,6].map(function(n){return '<option>'+n+'</option>'}).join('')+'</select></label>';
@@ -1273,6 +1301,7 @@ VUES.encaisser=function(){
   h+='<label class="ch">Montant reçu<div style="display:flex;gap:6px"><input name="montant" type="number" inputmode="decimal" step="0.01" min="0" style="flex:1" required><select name="devise"><option'+(b.devise!=='CDF'?' selected':'')+'>USD</option><option'+(b.devise==='CDF'?' selected':'')+'>CDF</option></select></div><span class="aide" id="aideMontant"></span></label>';
   h+='<label class="ch">Date et heure du paiement<input name="date" type="datetime-local" value="'+MAINTENANT()+'"><span class="aide">Maintenant par défaut.</span></label>';
   if(e.genre!=='garantie'){h+='<label class="ch">Payé comment ?<select name="mode">'+optsModes('Espèces')+'</select></label>';h+='<label class="ch">Référence<input name="reference" placeholder="N° de transaction, de dépôt…"><span class="aide">Pour le mobile money : le code reçu par SMS.</span></label>';}
+  h+=champsPayePercu(b);
   h+='<label class="ch plein">Commentaire<input name="commentaire" placeholder="Facultatif"></label>';
   h+='</div><div class="reste-info" id="infoEnc"></div><div class="form-actions" style="display:flex;justify-content:flex-end;gap:8px;margin-top:16px;flex-wrap:wrap"><button type="button" class="btn" onclick="aller(\'encaisser\',{enc:{bail:\'\'}})">Annuler</button><button class="btn prim" type="submit">Enregistrer le paiement</button></div></form></div>';
   return h;
@@ -1283,7 +1312,7 @@ function partChoisie(f,s){return f.part&&f.part.value?s.parts.find(function(x){r
 function encMaj(){
   var f=document.getElementById('fEnc');if(!f)return;
   var b=bail(V.enc.bail),s=ST[b.id],g=V.enc.genre,m=f.mois?f.mois.value:'';
-  var resteM=m?Math.max(0,r2(s.loyer-(s.credit[m]||0))):0,dedM=m&&s.ded[m]?s.ded[m]:[],pc=g==='charge'?partChoisie(f,s):null;
+  var resteM=m?Math.max(0,r2(s.duMois(m)-(s.credit[m]||0))):0,dedM=m&&s.ded[m]?s.ded[m]:[],pc=g==='charge'?partChoisie(f,s):null;
   if(g==='charge'){var libre=!pc;['lblNature','lblMoisCh'].forEach(function(id){var z=document.getElementById(id);if(z)z.style.display=libre?'':'none'});}
   if(V.enc._init||(g==='charge'&&document.activeElement===f.part)){var val='';
     if(g==='complet')val=b.devise==='CDF'?Math.round(resteM*n2(P.taux)):r2(resteM);
@@ -1292,7 +1321,7 @@ function encMaj(){
     if(g==='reparation')val=s.rep.reste||'';
     if(val!=='')f.montant.value=val;V.enc._init=false;}
   var nb=f.nb?parseInt(f.nb.value,10):1;
-  if(g==='complet'&&f.nb&&document.activeElement===f.nb){var tot=0;for(var i=0;i<nb;i++){var mi=addM(m,i);tot+=Math.max(0,s.loyer-(s.credit[mi]||0));}f.montant.value=r2(tot);}
+  if(g==='complet'&&f.nb&&document.activeElement===f.nb){var tot=0;for(var i=0;i<nb;i++){var mi=addM(m,i);tot+=Math.max(0,s.duMois(mi)-(s.credit[mi]||0));}f.montant.value=r2(tot);}
   var montant=n2(f.montant.value),dev=f.devise.value,taux=pc&&dev==='CDF'&&pc.devise==='CDF'?pc.taux:n2(P.taux),enUSD=dev==='CDF'?montant/taux:montant;
   document.getElementById('aideMontant').textContent=dev==='CDF'?'≈ '+usdTxt(enUSD)+' au taux de '+fnum(taux,0)+' FC':'';
   var am=document.getElementById('aideMois');if(am)am.textContent=m?'Payable le '+fd(ds(echeance(m,b)))+(dedM.length?' · '+dedM.map(function(d){return usdTxt(d.v)+' déduits ('+d.p.objet+')'}).join(', '):''):'';
@@ -1300,7 +1329,8 @@ function encMaj(){
   if(g==='complet'||g==='partiel'||g==='garantie'){
     if(g==='complet'&&nb>1)info='Ce paiement couvrira '+nb+' mois : de '+mLib(m)+' à '+mLib(addM(m,nb-1))+'. Un reçu sera fait pour chaque mois.';
     else{var apres=r2(resteM-enUSD);info=apres>0.009?'Après ce paiement, il restera <b>'+usd(apres)+'</b> à payer pour '+mLib(m)+'.':apres<-0.009?'Attention : c\'est '+usd(-apres)+' de plus que ce qui reste dû pour '+mLib(m)+'.':'Le loyer de '+mLib(m)+' sera entièrement payé.';
-      if(dedM.length)info+=' Le loyer de '+usd(s.loyer)+' est réduit de '+usd(dedM.reduce(function(t,d){return t+d.v},0))+' pour les travaux préfinancés.';}
+      if(m&&s.duMois(m)<s.loyer-0.009)info+=' Loyer réduit ce mois-là : '+usd(s.duMois(m))+' au lieu de '+usd(s.loyer)+'.';
+      if(dedM.length)info+=' Le loyer de '+usd(s.duMois(m))+' est réduit de '+usd(dedM.reduce(function(t,d){return t+d.v},0))+' pour les travaux préfinancés.';}
     if(g==='garantie')info+=' La garantie passera de '+usd(s.g.solde)+' à <b>'+usd(s.g.solde-enUSD)+'</b>.';
   }
   if(g==='charge')info=pc?'Facture '+pc.nature+' de '+mLib(pc.m)+' : sa part est de '+mont(pc.partMont,pc.devise)+', il a déjà payé '+mont(pc.payeMont,pc.devise)+'.':'Factures SNEL / Regideso à rembourser : '+usd(s.ch.reste)+'.';
@@ -1312,7 +1342,7 @@ function encValider(ev){
   ev.preventDefault();
   var f=ev.target,b=bail(V.enc.bail),g=V.enc.genre,s=ST[b.id];
   var montant=n2(f.montant.value),dev=f.devise.value;if(montant<=0){toast('Indique le montant reçu.',1);return}
-  var base={date:(f.date.value||MAINTENANT()).slice(0,16),bail:b.id,local:b.local,devise:dev,mode:f.mode?f.mode.value:'',reference:f.reference?f.reference.value:'',estimee:'Non',commentaire:f.commentaire.value};
+  var base=lirePayePercu(f,{date:(f.date.value||MAINTENANT()).slice(0,16),bail:b.id,local:b.local,devise:dev,mode:f.mode?f.mode.value:'',reference:f.reference?f.reference.value:'',estimee:'Non',commentaire:f.commentaire.value});
   if(g==='reparation'&&f.objet.value)base.commentaire=f.objet.value+(base.commentaire?' — '+base.commentaire:'');
   var type={complet:'Loyer',partiel:'Loyer',garantie:'Prélèvement garantie',complement:'Complément garantie',reparation:'Paiement réparation'}[g];
   var lots=[],conv=function(v){return dev==='CDF'?r2(v/n2(P.taux)):v},desc='';
@@ -1320,7 +1350,7 @@ function encValider(ev){
     lots.push(Object.assign({},base,{type:pc?pc.nature+' refacturée':f.type.value,mois:(pc?pc.m:f.moisCh.value)+'-01',montant:montant,usd:usdv}));desc='Part '+(pc?pc.nature+' '+mLib(pc.m):f.type.value)+' — '+b.local;}
   else if(g==='complet'&&parseInt(f.nb.value,10)>1){
     var nb=parseInt(f.nb.value,10),restes=[],tot=0;
-    for(var i=0;i<nb;i++){var mi=addM(f.mois.value,i),r=Math.max(0,s.loyer-(s.credit[mi]||0));restes.push([mi,r]);tot+=r;}
+    for(var i=0;i<nb;i++){var mi=addM(f.mois.value,i),r=Math.max(0,s.duMois(mi)-(s.credit[mi]||0));restes.push([mi,r]);tot+=r;}
     restes.forEach(function(x){var part=tot?r2(montant*x[1]/tot):r2(montant/nb);lots.push(Object.assign({},base,{type:type,mois:x[0]+'-01',montant:part,usd:conv(part)}));});
     desc='Loyers '+mLib(f.mois.value)+' (+'+(nb-1)+') — '+b.local;
   } else {lots.push(Object.assign({},base,{type:type,mois:f.mois?f.mois.value+'-01':mk(base.date)+'-01',montant:montant,usd:conv(montant)}));desc=type+(f.mois?' '+mLib(f.mois.value):'')+' — '+b.local;}
@@ -1381,7 +1411,7 @@ VUES.locaux=function(){
   var h=entete('Locaux','Les '+D.locaux.length+' locaux du complexe. Touche un local pour sa fiche détaillée et ses anciens locataires.','<button class="btn prim" onclick="formLocal()">'+ico('plus')+'Ajouter un local</button>');
   h+='<div class="tab-wrap"><table class="t"><thead><tr><th>Local</th><th>Description</th><th>Surface</th><th>Locataire actuel</th><th>Bail</th><th class="d">Loyer</th><th>Depuis</th><th>Situation</th><th class="d">Anciens locataires</th></tr></thead><tbody>'+
     D.locaux.map(function(l,i){var e=etatLocal(l),nb=D.baux.filter(function(b){return b.local===l.id&&b.statut!=='Actif'}).length;
-      return '<tr class="cliq'+(i%2?' z':'')+'" onclick="ouvrirLocal(\''+l.id+'\')"><td><b>'+l.id+'</b>'+(l.statut==='Retiré'?' <span class="pastille p-gris">Retiré</span>':'')+attenteIco(l)+'</td><td>'+esc(l.description)+'</td><td>'+esc(l.surface)+'</td><td>'+(e.b?esc(nomBail(e.b)):'<span class="muet">—</span>')+'</td><td>'+(e.b?e.b.id:'')+'</td><td class="d">'+(e.b?mont(e.b.loyer,e.b.devise):'')+'</td><td>'+(e.b?fd(e.b.debut):'')+'</td><td>'+e.lib+'</td><td class="d">'+nb+'</td></tr>';}).join('')+'</tbody></table></div>';
+      return '<tr class="cliq'+(i%2?' z':'')+'" onclick="ouvrirLocal(\''+l.id+'\')"><td><b>'+l.id+'</b>'+(l.statut==='Retiré'?' <span class="pastille p-gris">Retiré</span>':'')+attenteIco(l)+'</td><td>'+esc(l.description)+'</td><td>'+esc(l.surface)+'</td><td>'+(e.b?esc(nomBail(e.b))+(e.b.gerant?'<div class="muet" style="font-size:12.5px">Gérant : '+esc(e.b.gerant)+'</div>':''):'<span class="muet">—</span>')+'</td><td>'+(e.b?e.b.id:'')+'</td><td class="d">'+(e.b?loyerAff(e.b):'')+'</td><td>'+(e.b?fd(e.b.debut):'')+'</td><td>'+e.lib+'</td><td class="d">'+nb+'</td></tr>';}).join('')+'</tbody></table></div>';
   return h;
 };
 function ficheLocalHtml(l){
@@ -1428,8 +1458,11 @@ VUES.locataires=function(){
   h+='<div class="filtres"><div class="onglets">'+[['actifs','Actuels'],['anciens','Anciens'],['tous','Tous']].map(function(x){return '<button class="'+(F.filtre===x[0]?'on':'')+'" onclick="V.loc.filtre=\''+x[0]+'\';rendre()">'+x[1]+'</button>'}).join('')+'</div>'+
     '<div class="filtre"><input id="rechLoc" placeholder="Rechercher un nom, un numéro…" value="'+esc(F.q)+'" oninput="V.loc.q=this.value;clearTimeout(window._tq);window._tq=setTimeout(function(){rendre();var i=document.getElementById(\'rechLoc\');i.focus();i.setSelectionRange(i.value.length,i.value.length)},300)"></div></div>';
   h+='<div class="tab-wrap"><table class="t"><thead><tr><th>Bail</th><th>Local</th><th>Locataire</th><th>Téléphone</th><th>Entrée</th><th>Sortie</th><th class="d">Loyer</th><th class="d">Reste dû</th><th class="d">Garantie initiale</th><th class="d">Garantie en caisse</th><th class="d">Si départ aujourd\'hui</th><th>Ponctualité</th><th>Contrat</th></tr></thead><tbody>'+
-    liste.map(function(b,i){var s=ST[b.id];return '<tr class="cliq'+(i%2?' z':'')+'" onclick="ouvrirFicheBail(\''+b.id+'\')"><td>'+b.id+attenteIco(b)+'</td><td><b>'+b.local+'</b></td><td>'+esc(nomBail(b))+(s.avance.length?' <span class="pastille p-bleu">Payé d\'avance</span>':'')+'</td><td>'+esc(b.telephone)+'</td><td>'+fd(b.debut)+'</td><td>'+fd(b.fin)+'</td><td class="d">'+mont(b.loyer,b.devise)+'</td><td class="d'+(s.dette>0?' neg':'')+'">'+usd(s.dette)+'</td><td class="d">'+usd(s.g.versee+s.g.comp)+'</td><td class="d">'+usd(s.g.solde)+'</td><td class="d">'+apresDettes(s)+'</td><td>'+ponctLib(s.ponct)+'</td><td>'+(b.dateContrat?'<span class="pastille p-ok">Signé</span>':'<span class="pastille p-gris">À signer</span>')+'</td></tr>'}).join('')+
+    liste.map(function(b,i){var s=ST[b.id];return '<tr class="cliq'+(i%2?' z':'')+'" onclick="ouvrirFicheBail(\''+b.id+'\')"><td>'+b.id+attenteIco(b)+'</td><td><b>'+b.local+'</b></td><td>'+esc(nomBail(b))+(s.avance.length?' <span class="pastille p-bleu">Payé d\'avance</span>':'')+(b.gerant?'<div class="muet" style="font-size:12.5px">Gérant : '+esc(b.gerant)+'</div>':'')+'</td><td>'+esc(b.telephone)+'</td><td>'+fd(b.debut)+'</td><td>'+fd(b.fin)+'</td><td class="d">'+loyerAff(b)+'</td><td class="d'+(s.dette>0?' neg':'')+'">'+usd(s.dette)+'</td><td class="d">'+usd(s.g.versee+s.g.comp)+'</td><td class="d">'+usd(s.g.solde)+'</td><td class="d">'+apresDettes(s)+'</td><td>'+ponctLib(s.ponct)+'</td><td>'+(b.dateContrat?'<span class="pastille p-ok">Signé</span>':'<span class="pastille p-gris">À signer</span>')+'</td></tr>'}).join('')+
     (liste.length?'':'<tr><td colspan="13" class="vide">Aucun locataire ne correspond.</td></tr>')+'</tbody></table></div>';
+  var mc=mk(TODAY()),reds=(D.reductions||[]).filter(function(r){var b=bail(r.bail);return b&&b.statut==='Actif'&&(!mk(r.au)||mk(r.au)>=mc)}).sort(function(a,b){return a.local.localeCompare(b.local)});
+  if(reds.length)h+='<div class="carte mt"><h2>Réductions de loyer en cours ou à venir</h2><div class="tab-wrap"><table class="t rel"><thead><tr><th>Local</th><th>Locataire</th><th>Période</th><th class="d">Loyer réduit</th><th class="d x-mob">Au contrat</th></tr></thead><tbody>'+
+    reds.map(function(r,i){var b=bail(r.bail);return '<tr class="cliq'+(i%2?' z':'')+'" onclick="ouvrirFicheBail(\''+b.id+'\')"><td><b>'+b.local+'</b></td><td><div class="ell">'+esc(nomBail(b))+'</div></td><td>'+periodeRed(r)+'</td><td class="d"><b>'+mont(r.loyer,b.devise)+'</b></td><td class="d x-mob">'+mont(b.loyer,b.devise)+'</td></tr>'}).join('')+'</tbody></table></div></div>';
   return h;
 };
 function apresDettes(s){var v=r2(s.g.solde-s.dette);return v>=0?'<span title="À lui rendre s\'il partait aujourd\'hui">'+usd(v)+'</span>':'<span class="neg" title="La garantie ne couvre pas ses dettes">doit '+usd(-v)+'</span>';}
@@ -1441,10 +1474,11 @@ function calculGarantieHtml(s){var v=r2(s.g.solde-s.dette);
     '<div class="l final"><span>'+(v>=0?'À lui rendre s\'il partait aujourd\'hui':'Il devrait encore, même après la garantie')+'</span><span class="m">'+usd(Math.abs(v))+'</span></div></div>';}
 function ouvrirFicheBail(id){
   var b=bail(id),s=ST[id];
-  var c='<div class="resume-bail"><div><span>Local</span><b>'+b.local+' – '+esc((local(b.local)||{}).description||'')+'</b></div><div><span>Loyer</span><b class="num">'+mont(b.loyer,b.devise)+'</b></div><div><span>Reste dû</span><b class="num" style="color:'+(s.dette>0?'var(--ko)':'var(--ok)')+'">'+usd(s.dette)+'</b></div><div><span>Garantie en caisse</span><b class="num">'+usd(s.g.solde)+'</b> <small style="color:var(--doux)">sur '+usd(s.g.versee+s.g.comp)+' versés</small></div></div>';
+  var c='<div class="resume-bail"><div><span>Local</span><b>'+b.local+' – '+esc((local(b.local)||{}).description||'')+'</b></div><div><span>Loyer</span><b class="num">'+loyerAff(b)+'</b></div><div><span>Reste dû</span><b class="num" style="color:'+(s.dette>0?'var(--ko)':'var(--ok)')+'">'+usd(s.dette)+'</b></div><div><span>Garantie en caisse</span><b class="num">'+usd(s.g.solde)+'</b> <small style="color:var(--doux)">sur '+usd(s.g.versee+s.g.comp)+' versés</small></div></div>';
   c+=calculGarantieHtml(s);
   c+='<div class="infos">'+
     '<div><span>N° de bail</span><b>'+b.id+'</b></div><div><span>Téléphone</span>'+esc(b.telephone||'—')+'</div><div><span>Activité</span>'+esc(b.activite||'—')+'</div>'+
+    (b.gerant?'<div><span>Gérant</span>'+esc(b.gerant)+(b.telGerant?' · '+esc(b.telGerant):'')+'</div>':'')+
     '<div><span>Entrée / sortie</span>'+fd(b.debut)+' → '+(b.fin?fd(b.fin):'en cours')+'</div>'+
     '<div><span>Ponctualité</span>'+ponctLib(s.ponct)+(s.ponct.n?' <small style="color:var(--doux)">sur '+s.ponct.n+' paiement(s)</small>':'')+'</div>'+
     '<div><span>Contrat de bail</span>'+(b.dateContrat?'Signé le '+fd(b.dateContrat):'Pas encore signé')+(b.lienContrat?' · <a href="'+esc(b.lienContrat)+'" target="_blank">ouvrir le scan</a>':'')+'</div>'+
@@ -1457,9 +1491,15 @@ function ouvrirFicheBail(id){
       s.prefs.map(function(x,i){return '<tr class="cliq'+(i%2?' z':'')+'" onclick="ouvrirPref(\''+x.p.id+'\')"><td>'+esc(x.p.objet)+'</td><td class="d">'+usd(x.p.total)+'</td><td class="d">'+usd(x.p.deduction)+'</td><td>'+mLib(mk(x.p.premierMois))+'</td><td class="d">'+usd(x.deduit)+'</td><td class="d"><b>'+usd(x.reste)+'</b></td><td>'+(x.reste>0.009?mLib(x.finPrevue):'<span class="pastille p-ok">Terminé</span>')+'</td></tr>'}).join('')+'</tbody></table></div>';
     else c+='<p class="muet" style="margin:0 0 16px">Aucun. Si le locataire a avancé l\'argent d\'un achat (une cuve, une réparation…) remboursé par une déduction sur le loyer, ajoute-le ici.</p>';
   }
+  if(s.reds.length||b.statut==='Actif'){
+    c+='<h3>Réductions de loyer</h3>';
+    if(s.reds.length)c+='<div class="tab-wrap" style="margin-bottom:16px"><table class="t rel"><thead><tr><th>Période</th><th class="d">Loyer réduit</th><th class="d x-mob">Au contrat</th><th>Motif</th></tr></thead><tbody>'+
+      s.reds.map(function(r,i){return '<tr class="cliq'+(i%2?' z':'')+'" onclick="ouvrirReduction(\''+r.id+'\')"><td>'+periodeRed(r)+attenteIco(r)+'</td><td class="d"><b>'+mont(r.loyer,b.devise)+'</b></td><td class="d x-mob">'+mont(b.loyer,b.devise)+'</td><td><div class="ell">'+esc(r.motif||'—')+'</div></td></tr>'}).join('')+'</tbody></table></div>';
+    else c+='<p class="muet" style="margin:0 0 16px">Aucune. Si le loyer est réduit pendant un temps (démarrage de l\'activité, geste commercial…), ajoute la réduction ici : les mois concernés seront dus au loyer réduit.</p>';
+  }
   c+='<h3>Loyers mois par mois</h3>'+tableLoyers(lignesMois(b),false);
   fenetre(esc(nomBail(b))+' <span class="idb" style="font-size:14px">'+b.id+'</span>',c,
-    '<button class="btn gauche" onclick="ouvrirBail(\''+id+'\')">Modifier le bail</button><button class="btn" onclick="ouvrirPref(null,\''+id+'\')">'+ico('plus')+'Travaux préfinancés</button><button class="btn" onclick="facturerReparation(\''+id+'\')">'+ico('plus')+'Facturer une réparation</button><button class="btn" onclick="fermer();voirReleve(\''+id+'\')">'+ico('releves')+'Relevés</button>'+
+    '<button class="btn gauche" onclick="ouvrirBail(\''+id+'\')">Modifier le bail</button><button class="btn" onclick="ajouterSurBail(\''+id+'\')">'+ico('plus')+'Ajouter…</button><button class="btn" onclick="fermer();voirReleve(\''+id+'\')">'+ico('releves')+'Relevés</button>'+
     (b.statut==='Actif'?'<button class="btn" onclick="ouvrirSortie(\''+id+'\')">'+ico('sortie')+'Sortie</button><button class="btn prim" onclick="fermer();aller(\'encaisser\',{enc:{bail:\''+id+'\',genre:\'complet\',_init:true}})">'+ico('encaisser')+'Encaisser</button>'
       :(s.g.solde>0.009?'<button class="btn prim" onclick="ouvrirSortie(\''+id+'\')">Régler la garantie</button>':'')+(s.dette>0.009?'<button class="btn prim" onclick="fermer();V.vue=\'encaisser\';encBail(\''+id+'\')">Encaisser sa dette</button>':'')),true);
 }
@@ -1493,13 +1533,45 @@ function facturerReparation(id){var b=bail(id);
     '<button class="btn" onclick="fermer()">Annuler</button><button class="btn prim" onclick="document.getElementById(\'fRep\').requestSubmit()">Enregistrer</button>');}
 function repValider(ev,id){ev.preventDefault();var f=ev.target,b=bail(id),m=n2(f.montant.value);
   enregistrer('Journal',{date:f.date.value+'T00:00',bail:id,local:b.local,type:'Réparation à charge du locataire',mois:mk(f.date.value)+'-01',montant:m,devise:'USD',usd:m,mode:'',reference:'',estimee:'Non',commentaire:f.objet.value.trim()},'Réparation facturée','Réparation — '+b.local);}
+/* ---------- Réductions de loyer : un loyer plus bas pendant une période, par locataire ---------- */
+/** Fiche locataire : un seul bouton « Ajouter… » pour ce qui modifie ce qu'il doit (moins de boutons sur téléphone). */
+function ajouterSurBail(id){var b=bail(id);
+  fenetre('Ajouter pour '+esc(nomBail(b)),'<div class="liste-alertes">'+
+    [['ouvrirReduction(null,\''+id+'\')','Réduction de loyer','Un loyer plus bas pendant une période (démarrage de l\'activité…)'],
+     ['ouvrirPref(null,\''+id+'\')','Travaux préfinancés','Achat payé par le locataire, déduit chaque mois du loyer'],
+     ['facturerReparation(\''+id+'\')','Réparation à sa charge','Une réparation qu\'il doit rembourser']].map(function(x){
+      return '<button class="btn btn-choix" onclick="'+x[0]+'">'+ico('plus')+'<span><b>'+x[1]+'</b><br><small style="color:var(--doux);font-weight:400">'+x[2]+'</small></span></button>'}).join('')+'</div>',
+    '<button class="btn" onclick="ouvrirFicheBail(\''+id+'\')">Retour</button>');}
+function periodeRed(r){return (mk(r.au)&&mk(r.au)===mk(r.du)?mLib(mk(r.du)):'De '+mLib(mk(r.du))+(mk(r.au)?' à '+mLib(mk(r.au)):' à aujourd\'hui'));}
+var MOTIFS_RED=['Démarrage de l\'activité','Geste commercial','Travaux dans le local','Difficultés passagères'];
+function ouvrirReduction(id,bid){
+  var r=id?(D.reductions||[]).find(function(x){return x.id===id}):{id:'',bail:bid||'',du:mk(TODAY())+'-01',au:'',loyer:'',motif:'',notes:''};
+  if(!r)return;var b=bail(r.bail);if(!b)return;
+  var c='<div class="resume-bail"><div><span>Locataire</span><b>'+esc(nomBail(b))+'</b></div><div><span>Local</span><b>'+b.local+'</b></div><div><span>Loyer au contrat</span><b>'+mont(b.loyer,b.devise)+'</b></div></div>'+
+    '<form id="fRed" onsubmit="redValider(event,\''+(id||'')+'\',\''+b.id+'\')"><div class="champs">'+
+    '<label class="ch">Loyer réduit ('+(b.devise==='CDF'?'FC':'$')+' par mois)<input type="number" inputmode="decimal" step="0.01" min="0" name="loyer" value="'+esc(r.loyer)+'" required placeholder="Ex. : '+(b.devise==='CDF'?'':'80')+'"><span class="aide">Ce que le locataire doit payer chaque mois pendant la réduction.</span></label>'+
+    '<label class="ch">Motif<input name="motif" list="lstMotif" value="'+esc(r.motif)+'" placeholder="Démarrage de l\'activité…"><datalist id="lstMotif">'+MOTIFS_RED.map(function(m){return '<option value="'+esc(m)+'">'}).join('')+'</datalist></label>'+
+    '<label class="ch">À partir du mois de<input type="month" name="du" value="'+mk(r.du)+'" required></label>'+
+    '<label class="ch">Jusqu\'au mois de (inclus)<input type="month" name="au" value="'+mk(r.au)+'"><span class="aide">Laisse vide si la réduction dure jusqu\'à nouvel ordre.</span></label>'+
+    '<label class="ch plein">Notes<input name="notes" value="'+esc(r.notes)+'" placeholder="Facultatif"></label></div></form>';
+  fenetre(id?'Réduction de loyer '+id:'Nouvelle réduction de loyer',c,(id?'<button class="btn danger gauche" onclick="supprimer(\'Reductions\',\''+id+'\',\'cette réduction\')">Supprimer</button>':'')+'<button class="btn" onclick="ouvrirFicheBail(\''+b.id+'\')">Retour</button><button class="btn prim" onclick="document.getElementById(\'fRed\').requestSubmit()">Enregistrer</button>');
+}
+function redValider(ev,id,bid){ev.preventDefault();var f=ev.target,b=bail(bid);
+  var o={id:id||'',bail:bid,local:b.local,du:f.du.value+'-01',au:f.au.value?f.au.value+'-01':'',loyer:n2(f.loyer.value),motif:f.motif.value.trim(),notes:f.notes.value.trim()};
+  if(o.au&&o.au<o.du){toast('Le dernier mois doit venir après le premier.',1);return;}
+  if(o.loyer>=n2(b.loyer)){toast('Le loyer réduit doit être plus bas que le loyer du contrat ('+montTxt(b.loyer,b.devise)+').',1);return;}
+  var fin=function(x){return mk(x.au)||'9999-12'},chev=(D.reductions||[]).find(function(x){return x.bail===bid&&x.id!==id&&mk(x.du)<=fin(o)&&mk(o.du)<=fin(x)});
+  if(chev){toast('Une autre réduction couvre déjà une partie de ces mois ('+periodeRed(chev)+'). Modifie-la d\'abord.',1);return;}
+  enregistrer('Reductions',o,id?'Réduction modifiée':'Réduction enregistrée',(id?'Réduction '+id:'Nouvelle réduction')+' — '+b.local);}
 function ouvrirBail(id,lid){
-  var b=id?bail(id):{id:'',local:lid||'',locataire:'',telephone:'',activite:'',debut:TODAY(),fin:'',loyer:'',devise:'USD',jour:P.jourDefaut||5,statut:'Actif',garantie:'',dateContrat:'',lienContrat:'',notes:'',premierMois:''};
+  var b=id?bail(id):{id:'',local:lid||'',locataire:'',telephone:'',activite:'',debut:TODAY(),fin:'',loyer:'',devise:'USD',jour:P.jourDefaut||5,statut:'Actif',garantie:'',dateContrat:'',lienContrat:'',notes:'',premierMois:'',gerant:'',telGerant:''};
   var c='<form id="fBail" onsubmit="bailValider(event,\''+(id||'')+'\')" onchange="bailAvert()"><div class="champs">'+
     '<label class="ch">Local<select name="local" required>'+optsLocaux(b.local,'Choisir…')+'</select><span class="aide" id="avertBail" style="color:var(--ko)"></span></label>'+
     '<label class="ch">Nom du locataire<input name="locataire" value="'+esc(b.locataire)+'" required placeholder="Mme / Mr Prénom NOM"></label>'+
     '<label class="ch">Téléphone<input name="telephone" value="'+esc(b.telephone)+'" inputmode="tel" placeholder="+243 …"><span class="aide">Sert aussi à envoyer les reçus par WhatsApp.</span></label>'+
     '<label class="ch">Activité<input name="activite" value="'+esc(b.activite)+'" placeholder="Boutique, pharmacie…"></label>'+
+    '<label class="ch">Gérant (facultatif)<input name="gerant" value="'+esc(b.gerant||'')+'" placeholder="Qui tient le local quand le locataire est absent"><span class="aide">Ex. : un frère qui paie à la place du locataire.</span></label>'+
+    '<label class="ch">Téléphone du gérant<input name="telGerant" value="'+esc(b.telGerant||'')+'" inputmode="tel" placeholder="+243 …"></label>'+
     '<label class="ch">Date d\'entrée<input type="date" name="debut" value="'+esc(b.debut)+'"><span class="aide">Entré après le 15 : le loyer commence le mois suivant.</span></label>'+
     '<label class="ch">Premier mois facturé (facultatif)<input type="month" name="premierMois" value="'+mk(b.premierMois)+'"><span class="aide">Pour forcer le premier mois de loyer si la règle du 15 ne convient pas.</span></label>'+
     '<label class="ch">Date de sortie<input type="date" name="fin" value="'+esc(b.fin)+'"><span class="aide">Laisse vide tant qu\'il occupe le local.</span></label>'+
@@ -1518,7 +1590,7 @@ function conflitBail(lid,id,statut){if(statut!=='Actif')return null;return D.bau
 function bailAvert(){var f=document.getElementById('fBail');if(!f)return;var a=f.local.value?conflitBail(f.local.value,V._bailEdit,f.statut.value):null;
   document.getElementById('avertBail').innerHTML=a?'Ce local a déjà un locataire actif : '+esc(nomBail(a))+'. Enregistre d\'abord sa sortie.':'';}
 function bailValider(ev,id){ev.preventDefault();var f=ev.target;
-  var o={id:id||'',local:f.local.value,locataire:f.locataire.value.trim(),telephone:f.telephone.value.trim(),activite:f.activite.value,debut:f.debut.value,fin:f.fin.value,loyer:n2(f.loyer.value),devise:f.devise.value,jour:parseInt(f.jour.value,10)||5,statut:f.statut.value,garantie:n2(f.garantie.value),dateContrat:f.dateContrat.value,lienContrat:f.lienContrat.value.trim(),notes:f.notes.value,premierMois:f.premierMois.value?f.premierMois.value+'-01':''};
+  var o={id:id||'',local:f.local.value,locataire:f.locataire.value.trim(),telephone:f.telephone.value.trim(),activite:f.activite.value,debut:f.debut.value,fin:f.fin.value,loyer:n2(f.loyer.value),devise:f.devise.value,jour:parseInt(f.jour.value,10)||5,statut:f.statut.value,garantie:n2(f.garantie.value),dateContrat:f.dateContrat.value,lienContrat:f.lienContrat.value.trim(),notes:f.notes.value,premierMois:f.premierMois.value?f.premierMois.value+'-01':'',gerant:f.gerant.value.trim(),telGerant:f.telGerant.value.trim()};
   if(o.fin&&o.statut==='Actif'&&o.fin<=TODAY())o.statut='Clôturé';
   var a=conflitBail(o.local,id,o.statut);if(a){toast('Refusé : le local '+o.local+' a déjà un locataire actif ('+nomBail(a)+'). Enregistre d\'abord sa sortie.',1);return;}
   enregistrer('Baux',o,id?'Bail modifié':'Nouveau locataire enregistré',(id?'Bail '+id:'Nouveau bail')+' — '+o.local);}
@@ -1696,7 +1768,7 @@ function tableauOpsTel(liste,g){
 function payerRapide(bid,m,kind,cle){
   var b=bail(bid),s=ST[bid];if(!b)return;
   var x=kind==='charge'?s.parts.find(function(p){return p.cle===cle}):null;
-  var l=kind==='loyer'?(s.lignes.find(function(z){return z.m===m})||{reste:s.loyer}):null;
+  var l=kind==='loyer'?(s.lignes.find(function(z){return z.m===m})||{reste:s.duMois(m)}):null;
   if(kind==='charge'&&!x)return;
   var reste=x?x.resteMont:l.reste,dev=x?x.devise:(b.devise==='CDF'?'CDF':'USD');if(!x&&dev==='CDF')reste=Math.round(reste*n2(P.taux));
   var titre=x?'Part '+x.nature+' de '+mLib(m):'Loyer de '+mLib(m);
@@ -1705,14 +1777,14 @@ function payerRapide(bid,m,kind,cle){
     '<label class="ch">Montant reçu<div style="display:flex;gap:6px"><input name="montant" type="number" inputmode="decimal" step="0.01" min="0" value="'+(dev==='CDF'?Math.round(reste):r2(reste))+'" required style="flex:1"><select name="devise"><option'+(dev!=='CDF'?' selected':'')+'>USD</option><option'+(dev==='CDF'?' selected':'')+'>CDF</option></select></div><span class="aide">Change le montant s\'il n\'a payé qu\'une partie.</span></label>'+
     '<label class="ch">Date et heure<input name="date" type="datetime-local" value="'+MAINTENANT()+'"></label>'+
     '<label class="ch">Payé comment ?<select name="mode">'+optsModes('Espèces')+(kind==='loyer'&&b.statut==='Actif'?'<option value="__garantie">Pris sur la garantie</option>':'')+'</select></label>'+
-    '<label class="ch">Référence<input name="reference" placeholder="N° de transaction…"></label></div></form>',
+    '<label class="ch">Référence<input name="reference" placeholder="N° de transaction…"></label>'+champsPayePercu(b)+'</div></form>',
     '<button class="btn" onclick="fermer()">Annuler</button><button class="btn prim" onclick="document.getElementById(\'fRap\').requestSubmit()">Enregistrer le paiement</button>');
 }
 function rapValider(ev,bid,m,kind,cle){ev.preventDefault();var f=ev.target,b=bail(bid),s=ST[bid],x=kind==='charge'?s.parts.find(function(p){return p.cle===cle}):null;
   var mt=n2(f.montant.value),dev=f.devise.value;if(mt<=0){toast('Indique le montant reçu.',1);return}
   var gar=f.mode.value==='__garantie',type=x?x.nature+' refacturée':gar?'Prélèvement garantie':'Loyer';
   var usdv=dev==='CDF'?(x&&x.devise==='CDF'?r2(mt/x.taux):r2(mt/n2(P.taux))):mt;
-  var o={date:f.date.value.slice(0,16),bail:bid,local:b.local,type:type,mois:m+'-01',montant:mt,devise:dev,usd:usdv,mode:gar?'':f.mode.value,reference:f.reference.value,estimee:'Non',commentaire:''};
+  var o=lirePayePercu(f,{date:f.date.value.slice(0,16),bail:bid,local:b.local,type:type,mois:m+'-01',montant:mt,devise:dev,usd:usdv,mode:gar?'':f.mode.value,reference:f.reference.value,estimee:'Non',commentaire:''});
   fermer();
   var op=soumettre({kind:'save',list:[{table:'Journal',obj:o}],desc:type+' '+mLib(m)+' — '+b.local,apres:recuPret});
   if(op)toastAnnulable('Paiement enregistré',op.uid);
@@ -1730,6 +1802,7 @@ function editerOp(id){
     '<label class="ch">Montant<div style="display:flex;gap:6px"><input type="number" inputmode="decimal" step="0.01" name="montant" value="'+esc(j.montant)+'" required style="flex:1"><select name="devise"><option'+(j.devise!=='CDF'?' selected':'')+'>USD</option><option'+(j.devise==='CDF'?' selected':'')+'>CDF</option></select></div></label>'+
     '<label class="ch">Mode de paiement<select name="mode"><option value=""></option>'+optsModes(j.mode)+'</select></label>'+
     '<label class="ch">Référence<input name="reference" value="'+esc(j.reference)+'"></label>'+
+    champsPayePercu(bail(j.bail),j)+
     '<label class="ch plein">Commentaire / de quoi s\'agit-il<input name="commentaire" value="'+esc(j.commentaire)+'"></label>'+
     '<label class="plein" style="display:flex;gap:8px;align-items:center;font-size:14px"><input type="checkbox" name="estimee" '+(j.estimee==='Oui'?'checked':'')+'> Date estimée (je ne connais pas le jour exact du paiement)</label>'+
     (j.recu?'<div class="plein" style="font-size:14px;color:var(--doux)">Reçu n° <b>'+j.recu+'</b>'+(j.saisi?' · saisi le '+fd(j.saisi)+' à '+String(j.saisi).slice(11,16):'')+'</div>':'')+'</div></form>';
@@ -1737,7 +1810,7 @@ function editerOp(id){
 }
 function opValider(ev,id){ev.preventDefault();var f=ev.target,m=n2(f.montant.value),dev=f.devise.value;
   var ancien=id?D.journal.find(function(x){return x.id===id}):null;
-  var o={id:id,date:f.date.value.slice(0,16),type:f.type.value,bail:f.bail.value,local:f.local.value,mois:f.mois.value?f.mois.value+'-01':'',montant:m,devise:dev,usd:dev==='CDF'?r2(m/n2(P.taux)):m,mode:f.mode.value,reference:f.reference.value,commentaire:f.commentaire.value,estimee:f.estimee.checked?'Oui':'Non'};
+  var o={id:id,date:f.date.value.slice(0,16),type:f.type.value,bail:f.bail.value,local:f.local.value,mois:f.mois.value?f.mois.value+'-01':'',montant:m,devise:dev,usd:dev==='CDF'?r2(m/n2(P.taux)):m,mode:f.mode.value,reference:f.reference.value,commentaire:f.commentaire.value,estimee:f.estimee.checked?'Oui':'Non'};lirePayePercu(f,o);
   if(ancien&&ancien.estimee==='Oui'&&o.date.slice(0,10)!==String(ancien.date).slice(0,10)&&f.estimee.checked)o.estimee='Non';
   if(ancien&&dev==='CDF'&&ancien.devise==='CDF'&&ancien.montant===m)o.usd=ancien.usd;
   enregistrer('Journal',o,id?'Opération modifiée':'Opération ajoutée',(id?'Modification '+id:'Nouvelle opération')+' — '+o.type);}
@@ -1746,7 +1819,15 @@ function opValider(ev,id){ev.preventDefault();var f=ev.target,m=n2(f.montant.val
 function voirReleve(id){fermer();aller('releves',{rel:{mode:'bail',bail:id}})}
 function voirReleveLocal(id){aller('releves',{rel:{mode:'local',local:id}})}
 function lignesMois(b){var s=ST[b.id];return s.lignes.concat(s.avance).map(function(l){return Object.assign({b:b,pj:s.J.filter(function(j){return LOYER_T.indexOf(j.type)>=0&&mk(j.mois)===l.m}).sort(function(x,y){return String(x.date).localeCompare(String(y.date))})},l)});}
-function libPaiement(j){return fd(j.date)+(j.estimee==='Oui'?' (estimée)':'')+' · '+(j.type==='Loyer'?(j.mode||'Espèces'):LIB_TYPE[j.type])+(j.reference?' · réf. '+j.reference:'')+(j.recu&&!j._attente?' · reçu '+j.recu:'');}
+function libPaiement(j){return fd(j.date)+(j.estimee==='Oui'?' (estimée)':'')+' · '+(j.type==='Loyer'?(j.mode||'Espèces'):LIB_TYPE[j.type])+(j.reference?' · réf. '+j.reference:'')+(j.payePar?' · payé par '+j.payePar:'')+(j.percuPar?' · perçu par '+j.percuPar:'')+(j.recu&&!j._attente?' · reçu '+j.recu:'');}
+/** Qui a versé l'argent (le locataire, son gérant…) et qui l'a reçu pour le bailleur. */
+function dernierPercu(){try{return localStorage.getItem('anziama_percu')||''}catch(e){return ''}}
+function noterPercu(v){try{localStorage.setItem('anziama_percu',v||'')}catch(e){}}
+function nomsPercus(){var s={};if(P.proprietaire)s[P.proprietaire]=1;D.journal.forEach(function(j){if(j.percuPar)s[j.percuPar]=1});return Object.keys(s).sort();}
+function champsPayePercu(b,j){j=j||{};var g=b&&b.gerant;
+  return '<label class="ch">Payé par<input name="payePar" list="lstPaye" value="'+esc(j.payePar||'')+'" placeholder="'+esc(b?nomBail(b)+' (le locataire)':'Le locataire')+'"><datalist id="lstPaye">'+(b?'<option value="'+esc(nomBail(b))+'">':'')+(g?'<option value="'+esc(g)+'">':'')+'</datalist><span class="aide">'+(g?'Gérant : '+esc(g)+'. ':'')+'Vide = le locataire lui-même.</span></label>'+
+    '<label class="ch">Perçu par<input name="percuPar" list="lstPercu" value="'+esc(j.id?j.percuPar||'':dernierPercu())+'" placeholder="Qui a reçu l\'argent ?"><datalist id="lstPercu">'+nomsPercus().map(function(n){return '<option value="'+esc(n)+'">'}).join('')+'</datalist><span class="aide">La personne qui a encaissé pour le bailleur.</span></label>';}
+function lirePayePercu(f,o){if(f.payePar)o.payePar=f.payePar.value.trim();if(f.percuPar){o.percuPar=f.percuPar.value.trim();noterPercu(o.percuPar);}return o;}
 var DET_N=0;
 function basculerDet(btn,id,n){var r=document.getElementById(id);if(!r)return;r.hidden=!r.hidden;btn.textContent='Payé en '+n+' fois '+(r.hidden?'▸':'▾');}
 function tableLoyers(L,avecLocataire){
@@ -1758,7 +1839,7 @@ function tableLoyers(L,avecLocataire){
     if(!n)paie='<span class="muet">—</span>';
     else if(n===1)paie='<span style="font-size:13px">'+(l.pj[0]?esc(libPaiement(l.pj[0])):'Déduction travaux ('+esc(l.ded[0].p.objet)+')')+'</span>';
     else paie='<button class="lien-det" onclick="basculerDet(this,\''+id+'\','+n+')">Payé en '+n+' fois ▸</button>';
-    h+='<tr class="'+(i%2?'z':'')+'"><td><b><span class="m-l">'+mLib(l.m)+'</span><span class="m-c">'+MOISC[+l.m.slice(5,7)-1]+' '+l.m.slice(2,4)+'</span></b></td>'+(avecLocataire?'<td class="x-mob">'+esc(nomBail(l.b))+' <span class="idb">'+l.b.id+'</span></td>':'')+'<td class="x-mob">'+fd(ds(echeance(l.m,l.b)))+'</td><td class="d">'+usd(l.du)+'</td><td class="d">'+usd(l.paye)+'</td><td class="d'+(l.reste>0.009?' neg':'')+'">'+usd(l.reste)+'</td><td>'+pastilleMois(l)+'</td><td class="x-mob">'+paie+'</td></tr>';
+    h+='<tr class="'+(i%2?'z':'')+'"><td><b><span class="m-l">'+mLib(l.m)+'</span><span class="m-c">'+MOISC[+l.m.slice(5,7)-1]+' '+l.m.slice(2,4)+'</span></b></td>'+(avecLocataire?'<td class="x-mob">'+esc(nomBail(l.b))+' <span class="idb">'+l.b.id+'</span></td>':'')+'<td class="x-mob">'+fd(ds(echeance(l.m,l.b)))+'</td><td class="d">'+usd(l.du)+(l.red?'<span class="mrq-red" title="Loyer réduit'+(l.red.motif?' : '+esc(l.red.motif):'')+'">réd.</span>':'')+'</td><td class="d">'+usd(l.paye)+'</td><td class="d'+(l.reste>0.009?' neg':'')+'">'+usd(l.reste)+'</td><td>'+pastilleMois(l)+'</td><td class="x-mob">'+paie+'</td></tr>';
     if(n>1)h+='<tr class="detail" id="'+id+'" hidden><td colspan="'+nc+'">'+details.join('')+'</td></tr>';
   });
   mm.sort();var per=!mm.length?'':mm[0]===mm[mm.length-1]?' ('+mLib(mm[0])+')':' ('+mLib(mm[0])+' – '+mLib(mm[mm.length-1])+')';
@@ -1798,7 +1879,7 @@ VUES.releves=function(){
     var b=bail(R.bail),s=ST[b.id];
     var lb=local(b.local)||{};
     doc=docTete('Relevé du locataire',relSous(R,[b]))+
-      relTete([['Local','<b>'+b.local+'</b>'],['Locataire','<b>'+esc(nomBail(b))+'</b>'],['Description',esc(lb.description||'—')+(lb.surface?' · '+esc(lb.surface):'')],['Bail',b.id+(b.fin?' · fini le '+fd(b.fin):'')],['Loyer mensuel',mont(b.loyer,b.devise)],['Début du suivi',fd(debutSuivi([b]))]])+
+      relTete([['Local','<b>'+b.local+'</b>'],['Locataire','<b>'+esc(nomBail(b))+'</b>'+(b.gerant?' · gérant : '+esc(b.gerant):'')],['Description',esc(lb.description||'—')+(lb.surface?' · '+esc(lb.surface):'')],['Bail',b.id+(b.fin?' · fini le '+fd(b.fin):'')],['Loyer mensuel',mont(b.loyer,b.devise)+(s.reds.length?'<div style="font-size:12px;color:var(--doux)">Réduit : '+s.reds.slice().reverse().map(function(r){return montT(r.loyer,b.devise)+' '+(mk(r.au)?'de '+MOISC[+mk(r.du).slice(5,7)-1]+' '+mk(r.du).slice(2,4)+' à '+MOISC[+mk(r.au).slice(5,7)-1]+' '+mk(r.au).slice(2,4):'depuis '+MOISC[+mk(r.du).slice(5,7)-1]+' '+mk(r.du).slice(2,4))}).join(', ')+'</div>':'')],['Début du suivi',fd(debutSuivi([b]))]])+
       '<h3>Loyers</h3>'+tableLoyers(lignesMois(b).filter(parAn),false)+
       (s.parts.length?'<h3 style="margin-top:22px">Factures SNEL / Regideso</h3>'+tableParts(s,b,R.annee):'')+
       (s.rep.du>0?'<h3 style="margin-top:22px">Réparations à sa charge</h3><div class="mouvements">'+s.J.filter(function(j){return j.type==='Réparation à charge du locataire'||j.type==='Paiement réparation'}).map(function(j){return '<div><span>'+fd(j.date)+' — '+esc(j.type==='Paiement réparation'?'Remboursé':'Facturé')+(j.commentaire?' : '+esc(j.commentaire):'')+'</span><b>'+usd(j.usd)+'</b></div>'}).join('')+'</div>':'')+
@@ -2028,8 +2109,8 @@ function toastAnnulable(msg,uid){toastAction(msg,'Annuler',function(){
   if(op&&!op.enVol){retirerOp(uid);toast('Changement retiré');}
   else if(op&&op.enVol){op.annulerApres=true;toast('Annulation dès que l\'envoi est terminé');}
   else annulerMaintenant(uid);});}
-var LIBS={date:'date',bail:'bail',local:'local',type:'type',mois:'mois',montant:'montant',devise:'devise',usd:'montant USD',mode:'mode',reference:'référence',estimee:'date estimée',commentaire:'commentaire',locataire:'nom',telephone:'téléphone',debut:'entrée',fin:'sortie',loyer:'loyer',statut:'statut',garantie:'garantie',dateContrat:'contrat signé',lienContrat:'lien contrat',notes:'notes',description:'description',surface:'surface',adresse:'adresse',jour:'jour',activite:'activité',taux:'taux',debutSuivi:'début du suivi',grace:'délai de grâce',nom:'nom',proprietaire:'propriétaire',telProprietaire:'téléphone',objet:'objet',total:'total',deduction:'déduction',premierMois:'premier mois',couleurPrincipale:'couleur principale',couleurAccent:'couleur d\'accent',couleurLignes:'couleur des lignes',policeTitres:'police des titres',policeTexte:'police du texte',fond:'fond d\'écran',recu:'reçu'};
-function valLib(k,v){if(v===''||v==null)return '—';var t=String(v);if(k==='mois'||k==='premierMois')return mLib(mk(t));if(/^\d{4}-\d{2}-\d{2}/.test(t)){var h=t.slice(11,16);return fd(t)+(h&&h!=='00:00'?' '+h:'');}return t;}
+var LIBS={date:'date',bail:'bail',local:'local',type:'type',mois:'mois',montant:'montant',devise:'devise',usd:'montant USD',mode:'mode',reference:'référence',estimee:'date estimée',commentaire:'commentaire',locataire:'nom',telephone:'téléphone',debut:'entrée',fin:'sortie',loyer:'loyer',statut:'statut',garantie:'garantie',dateContrat:'contrat signé',lienContrat:'lien contrat',notes:'notes',description:'description',surface:'surface',adresse:'adresse',jour:'jour',activite:'activité',taux:'taux',debutSuivi:'début du suivi',grace:'délai de grâce',nom:'nom',proprietaire:'propriétaire',telProprietaire:'téléphone',objet:'objet',total:'total',payePar:'payé par',percuPar:'perçu par',gerant:'gérant',telGerant:'téléphone du gérant',du:'du mois',au:'au mois',motif:'motif',deduction:'déduction',premierMois:'premier mois',couleurPrincipale:'couleur principale',couleurAccent:'couleur d\'accent',couleurLignes:'couleur des lignes',policeTitres:'police des titres',policeTexte:'police du texte',fond:'fond d\'écran',recu:'reçu'};
+function valLib(k,v){if(v===''||v==null)return '—';var t=String(v);if(k==='mois'||k==='premierMois'||k==='du'||k==='au')return mLib(mk(t));if(/^\d{4}-\d{2}-\d{2}/.test(t)){var h=t.slice(11,16);return fd(t)+(h&&h!=='00:00'?' '+h:'');}return t;}
 function diff(m){
   var a={},b={};try{a=m.avant&&m.avant.trim().charAt(0)==='{'?JSON.parse(m.avant):{}}catch(e){}try{b=m.apres&&m.apres.trim().charAt(0)==='{'?JSON.parse(m.apres):{}}catch(e){}
   if(m.apres&&m.apres.trim().charAt(0)!=='{')return esc(m.apres);
@@ -2044,6 +2125,7 @@ function diff(m){
 /* ---------- Paramètres et apparence ---------- */
 VUES.params=function(){
   var t=themeChoisi(),fondId=P.fond||'auto';
+  if(LECTURE)return entete('Paramètres','Accès en lecture seule : tu peux tout consulter, rien modifier.')+'<div class="carte"><h2>Affichage</h2><div style="font-size:13.5px;color:var(--doux);font-weight:500;margin-bottom:6px">Mode d\'affichage (sur cet appareil)</div><div class="onglets">'+[['auto','Comme l\'appareil'],['light','Clair'],['dark','Sombre']].map(function(x){return '<button class="'+(t===x[0]?'on':'')+'" onclick="choisirTheme(\''+x[0]+'\')">'+x[1]+'</button>'}).join('')+'</div></div>'+(typeof carteAppli==='function'?carteAppli():'');
   var h=entete('Paramètres et apparence','Les réglages du complexe et l\'allure de l\'application.');
   h+='<div class="grille g2"><div class="carte"><h2>Réglages</h2><form id="fPar" onsubmit="parValider(event)"><div class="champs">'+
     '<label class="ch">Nom du complexe<input name="nom" value="'+esc(P.nom)+'"></label>'+
@@ -2071,12 +2153,30 @@ VUES.params=function(){
     '<div class="plein"><span style="font-size:13.5px;color:var(--doux);font-weight:500">Logo</span><div style="display:flex;gap:12px;align-items:center;margin-top:6px;flex-wrap:wrap"><div style="width:120px;height:72px;border-radius:10px;display:flex;align-items:center;justify-content:center;background:#0E1A2B">'+(MEDIAS.logo&&MEDIAS.logo.data?'<img src="'+MEDIAS.logo.data+'" style="max-width:110px;max-height:64px" alt="Logo">':'<span style="color:#8E9AAE;font-size:12px">Aucun</span>')+'</div><label class="btn mini" style="cursor:pointer">Choisir une image<input type="file" accept="image/*" style="display:none" onchange="chargerLogo(this)"></label>'+(MEDIAS.logo&&MEDIAS.logo.data?'<button type="button" class="btn mini danger" onclick="envoyerLogo(\'\')">Retirer le logo</button>':'')+'</div></div>'+
     '</div><div style="display:flex;justify-content:space-between;gap:8px;margin-top:16px;flex-wrap:wrap"><button type="button" class="btn" onclick="appDefaut()">Couleurs et polices d\'origine</button><button class="btn prim">Enregistrer l\'apparence</button></div></form></div></div>';
   h+=carteAppli();
+  h+='<div class="carte mt"><h2>Accès visiteurs (lecture seule)</h2><p style="margin-top:0;color:var(--doux)">Pour ceux qui suivent le dossier sans rien modifier : ils voient les mêmes chiffres et relevés, mais aucun bouton pour saisir, corriger ou supprimer.</p><div id="zoneVisiteurs"><button class="btn" onclick="accesVisiteurs(\'voir\')">'+ico('oeil')+'Code et lien visiteur</button></div></div>';
   h+='<div class="carte mt"><h2>Entretien du fichier</h2><p style="margin-top:0;color:var(--doux)">À utiliser quand tu as fini de saisir les mois passés : les reçus seront renumérotés dans l\'ordre des dates, sans trou.</p><button class="btn" onclick="renumeroter()">Renuméroter les reçus</button></div>';
   return h;
 };
 function parValider(ev){ev.preventDefault();var f=ev.target,p={};['nom','adresse','proprietaire','telProprietaire','taux','debutSuivi','grace','jourDefaut'].forEach(function(k){p[k]=f[k].value});
   ['taux','grace','jourDefaut'].forEach(function(k){p[k]=n2(p[k])});
   var op=soumettre({kind:'params',params:p,desc:'Réglages'});if(op){majMarque();toastAnnulable('Réglages enregistrés',op.uid);}}
+/** Code visiteur (lecture seule) : créé par Google, réservé à l'éditeur. Le lien relie l'appli d'un visiteur en un geste. */
+function lienVisiteur(cle){if(typeof apiConf!=='function'||!apiConf())return '';return location.href.split('#')[0].split('?')[0]+'#visiteur='+encodeURIComponent(btoa(JSON.stringify({u:apiConf().url,c:cle})));}
+function accesVisiteurs(action){
+  if(action==='supprimer'&&!confirm('Couper l\'accès des visiteurs ? Ils ne pourront plus ouvrir les données tant que tu ne crées pas un nouveau code.'))return;
+  if(action==='changer'&&!confirm('Changer le code ? Les visiteurs actuels perdront l\'accès jusqu\'à ce que tu leur envoies le nouveau lien.'))return;
+  occupe(true);call('accesLecture',action==='voir'?'creer':action).then(function(r){occupe(false);var z=document.getElementById('zoneVisiteurs');if(!z)return;
+    if(!r.cle){z.innerHTML='<p style="margin-top:0">Accès visiteurs coupé : aucun code valable.</p><button class="btn" onclick="accesVisiteurs(\'voir\')">Créer un code visiteur</button>';return;}
+    var lien=lienVisiteur(r.cle);V._lienVisiteur=lien;
+    z.innerHTML='<div class="infos"><div><span>Code visiteur</span><b class="code-visiteur">'+esc(r.cle)+'</b></div></div>'+
+      (lien?'<p style="color:var(--doux);font-size:14px">Envoie ce lien au visiteur (WhatsApp, e-mail). En l\'ouvrant, son appli se relie toute seule, en lecture seule.</p><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn prim" onclick="partagerLienVisiteur()">'+ico('partager')+'Envoyer le lien</button><button class="btn" onclick="accesVisiteurs(\'changer\')">Changer le code</button><button class="btn danger" onclick="accesVisiteurs(\'supprimer\')">Couper l\'accès</button></div>'
+        :'<p style="color:var(--doux);font-size:14px">Le visiteur ouvre l\'appli installée, puis tape l\'adresse de l\'appli Google et ce code. Le lien d\'invitation tout prêt se crée depuis l\'appli installée (Paramètres).</p><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn" onclick="accesVisiteurs(\'changer\')">Changer le code</button><button class="btn danger" onclick="accesVisiteurs(\'supprimer\')">Couper l\'accès</button></div>');
+  }).catch(function(e){occupe(false);erreur(e)});
+}
+function partagerLienVisiteur(){var lien=V._lienVisiteur;if(!lien)return;var txt='Accès en consultation au suivi des loyers du '+(P.nom||'Complexe Anziama')+' :';
+  if(navigator.share)navigator.share({title:P.nom||'Complexe Anziama',text:txt,url:lien}).catch(function(){});
+  else if(navigator.clipboard)navigator.clipboard.writeText(txt+' '+lien).then(function(){toast('Lien copié : colle-le dans WhatsApp ou un e-mail.')},function(){prompt('Copie ce lien :',lien)});
+  else prompt('Copie ce lien :',lien);}
 function appLire(){var f=document.getElementById('fApp'),p={};['couleurPrincipale','couleurAccent','couleurLignes','policeTitres','policeTexte'].forEach(function(k){p[k]=f[k].value});return p;}
 function appApercu(){appliquerApparence(Object.assign({},P,appLire()));}
 function appDefaut(){var f=document.getElementById('fApp');Object.keys(DEFAUTS).forEach(function(k){if(f[k])f[k].value=DEFAUTS[k]});appApercu();}
@@ -2229,6 +2329,20 @@ function fenetre(titre,corps,pieds,large){
   document.getElementById('couche').innerHTML='<div class="voile" onclick="if(event.target===this)fermer()"><div class="fenetre'+(large?' large':'')+'" role="dialog" aria-modal="true"><div class="tete"><h2>'+titre+'</h2><button class="x" onclick="fermer()" aria-label="Fermer">×</button></div><div class="corps">'+corps+'</div>'+(pieds?'<div class="pieds">'+pieds+'</div>':'')+'</div></div>';
   if(window.innerWidth>860){var p=document.querySelector('.fenetre input:not([readonly]):not([type=checkbox]),.fenetre select');if(p)try{p.focus({preventScroll:true})}catch(e){}}
   ameliorer(document.getElementById('couche'));
+  if(LECTURE)lectureSeule(document.getElementById('couche'));
+}
+/** Visiteur : retire les boutons qui saisissent, corrigent ou suppriment ; les fiches restent lisibles. */
+var RE_EDITION=/ajouterSurBail|ouvrirBail|ouvrirPref|ouvrirReduction\(null|facturerReparation|ouvrirSortie|encBail|supprimer|ouvrirTravaux\(null|formLocal|payerRapide|editerOp\(\)|confirmerAnnulation|reglagesConstruction|renumeroter|retirerFond|choisirFond|appDefaut|requestSubmit|sortieValider|aller\('encaisser'|accesVisiteurs/;
+function lectureSeule(r){
+  if(!r)return;
+  r.querySelectorAll('[onclick]').forEach(function(el){if(!RE_EDITION.test(el.getAttribute('onclick')))return;
+    if(el.tagName==='TR'){el.removeAttribute('onclick');el.classList.remove('cliq');}else el.remove();});
+  if(r.id==='main')r.querySelectorAll('.btn[onclick^="aller(\'depenses\'"]').forEach(function(x){x.remove()});
+  r.querySelectorAll('.lien-det').forEach(function(x){if(x.tagName!=='BUTTON')x.remove()});
+  r.querySelectorAll('form').forEach(function(f){
+    if(r.id==='main'){var c=f.closest('.carte');(c||f).remove();return;}
+    f.querySelectorAll('input,select,textarea,button').forEach(function(x){x.disabled=true});});
+  r.querySelectorAll('input[type=file]').forEach(function(x){var l=x.closest('label');(l||x).remove();});
 }
 function fermer(){document.getElementById('couche').innerHTML=''}
 document.addEventListener('keydown',function(e){if(e.key==='Escape')fermer()});

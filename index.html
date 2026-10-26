@@ -622,7 +622,7 @@ table.t .m-c{display:none}
 /* =========================================================
    Liaison avec Google Sheets
    ========================================================= */
-var VERSION_ATTENDUE='2.6';
+var VERSION_ATTENDUE='2.7';
 /* Appli installée (PC et téléphone) : elle n'est pas ouverte depuis Google, elle parle à Google par internet
    avec l'adresse de l'appli et le code secret, gardés sur cet appareil. */
 var APPLI_INSTALLEE=!(window.google&&google.script&&google.script.run);
@@ -723,6 +723,7 @@ var IC={
   lune:'<path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/>',
   auto:'<circle cx="12" cy="12" r="8.5"/><path d="M12 3.5v17A8.5 8.5 0 0 0 12 3.5z" fill="currentColor"/>',
   menu:'<path d="M4 7h16M4 12h16M4 17h16"/>',
+  gestion:'<path d="M12 3a9 9 0 1 0 9 9h-9z"/><path d="M15 3.5A9 9 0 0 1 20.5 9H15z"/>',
   construction:'<path d="M3 21h18"/><path d="M5 21V11h8v10"/><path d="M8 14h2M8 17h2"/><path d="M15 21V5l-4 3"/><path d="M15 5h6l-2 3"/><path d="M19 8v3"/>'
 };
 function ico(n){return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+(IC[n]||'')+'</svg>'}
@@ -763,7 +764,7 @@ var LECTURE=false,Dserv=null,FILE=[],D=null,P={},ST={},FC=[],MASQUE=false,ENVOI=
 var MEDIAS={logo:lsGet('anziama_media_logo')||{},fond:lsGet('anziama_media_fond')||{}};
 try{MASQUE=localStorage.getItem('anziama_masque')==='1'}catch(e){}
 var V={vue:'accueil',annee:annee(),moisDet:'',ops:{annee:'tout',mois:'',local:'',bail:'',grp:'',groupe:'mois',q:'',np:'actuels'},rel:{mode:'bail',bail:'',local:'',annee:'tout',mois:''},loc:{filtre:'actifs',q:''},enc:{bail:'',genre:'complet'}};
-var CLE_TABLE={Locaux:'locaux',Baux:'baux',Journal:'journal',Prefinancements:'prefinancements',Travaux:'travaux',Reductions:'reductions'};
+var CLE_TABLE={Locaux:'locaux',Baux:'baux',Journal:'journal',Prefinancements:'prefinancements',Travaux:'travaux',Reductions:'reductions',Charges:'charges'};
 
 function appliquerLocale(d,op){
   if(op.kind==='save') op.list.forEach(function(x,i){
@@ -777,7 +778,7 @@ function appliquerLocale(d,op){
 }
 function reconstruire(){
   if(!Dserv)return;
-  var d=cloner(Dserv);d.prefinancements=d.prefinancements||[];d.travaux=d.travaux||[];d.reductions=d.reductions||[];d.modifs=d.modifs||[];
+  var d=cloner(Dserv);d.prefinancements=d.prefinancements||[];d.travaux=d.travaux||[];d.reductions=d.reductions||[];d.charges=d.charges||[];d.modifs=d.modifs||[];
   FILE.forEach(function(op){appliquerLocale(d,op)});
   D=d;P=D.params||{};LECTURE=D.role==='lecture';document.body.classList.toggle('lecture',LECTURE);
   D.locaux.sort(function(a,b){return a.id.localeCompare(b.id)});
@@ -785,7 +786,7 @@ function reconstruire(){
   recalc();
 }
 function appliquerDelta(r){
-  var dl=r.delta||{};Dserv.modifs=Dserv.modifs||[];Dserv.travaux=Dserv.travaux||[];Dserv.reductions=Dserv.reductions||[];
+  var dl=r.delta||{};Dserv.modifs=Dserv.modifs||[];Dserv.travaux=Dserv.travaux||[];Dserv.reductions=Dserv.reductions||[];Dserv.charges=Dserv.charges||[];
   (dl.recs||[]).forEach(function(x){var t=Dserv[CLE_TABLE[x.table]];var i=t.findIndex(function(o){return o.id===x.rec.id});if(i>=0)t[i]=x.rec;else t.push(x.rec);});
   (dl.suppr||[]).forEach(function(x){var t=Dserv[CLE_TABLE[x.table]];var i=t.findIndex(function(o){return o.id===x.id});if(i>=0)t.splice(i,1);});
   var connus={};Dserv.modifs.forEach(function(m){connus[m.row]=1});
@@ -1125,13 +1126,13 @@ document.addEventListener('click',function(e){var m=e.target.closest&&e.target.c
    ========================================================= */
 var MENU=[
   ['Au quotidien',[['accueil','Accueil'],['encaisser','Encaisser un paiement'],['depenses','Dépenses et factures']]],
-  ['Gestion',[['locaux','Locaux'],['locataires','Locataires et baux'],['garanties','Garanties'],['construction','Construction']]],
+  ['Gestion',[['locaux','Locaux'],['locataires','Locataires et baux'],['garanties','Garanties'],['gestion','Gestion financière'],['construction','Construction']]],
   ['Consulter',[['operations','Toutes les opérations'],['releves','Relevés'],['banque','Dossier bancaire']]],
   ['Système',[['modifs','Historique des modifications'],['params','Paramètres et apparence']]]
 ];
-var MENU_IC={accueil:'accueil',encaisser:'encaisser',depenses:'depense',locaux:'locaux',locataires:'locataires',garanties:'garanties',operations:'operations',releves:'releves',banque:'banque',modifs:'modifs',params:'params',construction:'construction'};
+var MENU_IC={accueil:'accueil',encaisser:'encaisser',depenses:'depense',locaux:'locaux',locataires:'locataires',garanties:'garanties',operations:'operations',releves:'releves',banque:'banque',modifs:'modifs',params:'params',construction:'construction',gestion:'gestion'};
 /** Visiteur (lecture seule) : pas de saisie, pas d'historique ni de retour en arrière. */
-function menuVisible(){return LECTURE?MENU.map(function(g){return [g[0],g[1].filter(function(it){return ['encaisser','modifs'].indexOf(it[0])<0})]}):MENU;}
+function menuVisible(){return LECTURE?MENU.map(function(g){return [g[0],g[1].filter(function(it){return ['encaisser','modifs','gestion'].indexOf(it[0])<0})]}):MENU;}
 function nav(){
   document.getElementById('nav').innerHTML=menuVisible().map(function(g){return '<div class="groupe">'+g[0]+'</div>'+g[1].map(function(it){return '<button class="'+(V.vue===it[0]?'actif':'')+'" onclick="aller(\''+it[0]+'\')">'+ico(MENU_IC[it[0]])+it[1]+'</button>';}).join('');}).join('');
   var t=themeChoisi(),logo=MEDIAS.logo&&MEDIAS.logo.data;
@@ -2071,13 +2072,19 @@ function calculConstruction(){
     else if(t==='SNEL refacturée'||t==='Regideso refacturée')R.factRecup+=v;});
   D.baux.forEach(function(b){var s=ST[b.id];Object.keys(s.ded).forEach(function(m){if(s.mf.mois.indexOf(m)<0)return;s.ded[m].forEach(function(d){R.ded+=d.v;if(parLoc[b.local])parLoc[b.local].percu+=d.v;})})});
   R.factNettes=Math.max(0,R.factPayees-R.factRecup);
-  R.net=r2(R.loyers+R.ded+R.avant+R.autres-R.charges-R.factNettes);
+  /* Charges fixes de la Gestion financière (besoin personnel, salaires…) : elles ne remboursent pas la construction */
+  var suivi=mk(P.debutSuivi)||mk(TODAY()),dernier=addM(mk(TODAY()),-1),nbMois=0,m=suivi,F=flux();R.fixes=0;
+  while(m<=dernier&&nbMois<600){nbMois++;m=addM(m,1);}
+  /* sur les mêmes mois que les loyers comptés plus haut (le Journal remonte avant le début du suivi) */
+  var m0=Object.keys(F).concat([suivi]).sort()[0];for(var mm=m0,k=0;mm<=dernier&&k<600;mm=addM(mm,1),k++)R.fixes+=bilanMois(mm,F).fixes;
+  R.fixes=r2(R.fixes);
+  R.net=r2(R.loyers+R.ded+R.avant+R.autres-R.charges-R.factNettes-R.fixes);
   /* Rythme actuel : loyers des baux en cours, moins les charges moyennes d'un mois */
-  var suivi=mk(P.debutSuivi)||mk(TODAY()),dernier=addM(mk(TODAY()),-1),nbMois=0,m=suivi;while(m<=dernier&&nbMois<600){nbMois++;m=addM(m,1);}
   var actifs=D.baux.filter(function(b){return b.statut==='Actif'});
   R.loyersMois=actifs.reduce(function(s,b){return s+loyerUSD(b)},0);
   R.chargesMois=nbMois?Math.max(0,(R.charges+R.factNettes-R.autres)/nbMois):0;R.nbMois=nbMois;
-  R.rythme=r2(R.loyersMois-R.chargesMois);
+  R.fixesMois=r2(chargesDuMois(mk(TODAY())).reduce(function(s,c){return s+montantCharge(c,R.loyersMois)},0));
+  R.rythme=r2(R.loyersMois-R.chargesMois-R.fixesMois);
   var cout=r2(tot.paye+tot.avenir);
   var res={L:L,tot:tot,cats:cats,R:R,cout:cout,surf:surf,terrain:terrain,
     pct:tot.paye?R.net/tot.paye:null,pctTotal:cout?R.net/cout:null,
@@ -2156,10 +2163,10 @@ function detailConstruction(){
   var C=calculConstruction(),R=C.R,l=function(a,b,neg){return '<tr><td>'+a+'</td><td class="d'+(neg?' neg':'')+'">'+(neg?'− ':'')+usd(b)+'</td></tr>'};
   var c='<p style="margin-top:0;color:var(--doux)">Ce que le complexe a rapporté depuis le début du suivi ('+fd(String(P.debutSuivi||'').slice(0,10))+'), moins ses charges.</p><div class="tab-wrap"><table class="t"><tbody>'+
     l('Loyers encaissés',R.loyers)+(R.ded?l('Loyers payés par des travaux préfinancés',R.ded):'')+(R.avant?l('Loyers perçus avant le suivi (réglage)',R.avant):'')+(R.autres?l('Autres recettes (réparations remboursées, retenues…)',R.autres):'')+
-    (R.charges?l('Entretien, taxes et autres dépenses',R.charges,1):'')+(R.factNettes?l('Factures SNEL / Regideso non remboursées',R.factNettes,1):'')+
+    (R.charges?l('Entretien, taxes et autres dépenses',R.charges,1):'')+(R.factNettes?l('Factures SNEL / Regideso non remboursées',R.factNettes,1):'')+(R.fixes?l('Charges fixes (Gestion financière)',R.fixes,1):'')+
     '<tr class="tot"><td>Récupéré à ce jour</td><td class="d">'+usd(R.net)+'</td></tr></tbody></table></div>'+
-    '<h3 style="margin:18px 0 6px">Rythme actuel</h3><div class="tab-wrap"><table class="t"><tbody>'+l('Loyers des baux en cours, par mois',R.loyersMois)+l('Charges moyennes par mois (sur '+R.nbMois+' mois suivis)',R.chargesMois,1)+'<tr class="tot"><td>Récupéré chaque mois</td><td class="d">'+usd(R.rythme)+'</td></tr></tbody></table></div>'+
-    '<p style="font-size:13.5px;color:var(--doux)">Délai = reste à récupérer ÷ ce qui est récupéré chaque mois. Rendement par an = 12 × ce qui est récupéré chaque mois ÷ coût total prévu ('+usd(C.cout)+'). Les garanties ne comptent pas : elles appartiennent aux locataires. Les travaux préfinancés par un locataire comptent comme une dépense de construction.</p>';
+    '<h3 style="margin:18px 0 6px">Rythme actuel</h3><div class="tab-wrap"><table class="t"><tbody>'+l('Loyers des baux en cours, par mois',R.loyersMois)+l('Charges moyennes par mois (sur '+R.nbMois+' mois suivis)',R.chargesMois,1)+(R.fixesMois?l('Charges fixes par mois (Gestion financière)',R.fixesMois,1):'')+'<tr class="tot"><td>Récupéré chaque mois</td><td class="d">'+usd(R.rythme)+'</td></tr></tbody></table></div>'+
+    '<p style="font-size:13.5px;color:var(--doux)">Délai = reste à récupérer ÷ ce qui est récupéré chaque mois. Rendement par an = 12 × ce qui est récupéré chaque mois ÷ coût total prévu ('+usd(C.cout)+'). Les garanties ne comptent pas : elles appartiennent aux locataires. Les travaux préfinancés par un locataire comptent comme une dépense de construction. Seul le gain qui reste après les charges fixes rembourse la construction.</p>';
   fenetre('Détail du calcul',c,'<button class="btn prim" onclick="fermer()">Fermer</button>');
 }
 function ouvrirTravaux(id,loc){
@@ -2192,6 +2199,102 @@ function reglagesConstruction(){
 function constValider(ev){ev.preventDefault();var f=ev.target;fermer();
   var op=soumettre({kind:'params',params:{constTerrain:f.constTerrain.value,constLoyersAvant:n2(f.constLoyersAvant.value),constRepartition:f.constRepartition.value},desc:'Réglages construction'});
   if(op)toastAnnulable('Réglages enregistrés',op.uid);}
+
+/* ---------- Gestion financière : ce qui est encaissé chaque mois, les charges fixes, et le gain pour le projet ---------- */
+var CHARGES_PROPOSEES=[['Besoin personnel',300],['Salaire ouvrier',100],['Redevance famille',150]];
+/** Argent entré et sorti chaque mois (mois concerné : le loyer de mars compte en mars, même payé en avril). */
+function flux(){
+  var F={};
+  D.journal.forEach(function(j){var m=periode(j);if(!m)return;var v=n2(j.usd),t=j.type,x=F[m]=F[m]||{loyers:0,autres:0,depenses:0};
+    if(t==='Loyer'||t==='Prélèvement garantie')x.loyers+=v;
+    else if(t==='Autre recette'||t==='Paiement réparation'||t==='Retenue garantie'||t==='SNEL refacturée'||t==='Regideso refacturée')x.autres+=v;
+    else if(t==='Entretien'||t==='Taxe'||t==='Autre dépense'||t==='SNEL payée'||t==='Regideso payée')x.depenses+=v;});
+  return F;
+}
+function chargesDuMois(m){return (D.charges||[]).filter(function(c){return (!mk(c.du)||mk(c.du)<=m)&&(!mk(c.au)||mk(c.au)>=m)})}
+/** Montant d'une charge pour un mois : montant fixe, ou pourcentage de ce qui est encaissé. */
+function montantCharge(c,entrees){return n2(c.pct)>0?r2(Math.max(0,entrees)*n2(c.pct)/100):n2(c.usd)}
+/** Bilan d'un mois : entrées, dépenses notées, charges fixes, gain pour le projet. */
+function bilanMois(m,F){
+  var x=(F||flux())[m]||{loyers:0,autres:0,depenses:0},e=r2(x.loyers+x.autres);
+  var ch=chargesDuMois(m).map(function(c){return {c:c,v:montantCharge(c,e)}}),fixes=r2(ch.reduce(function(s,y){return s+y.v},0));
+  return {m:m,loyers:x.loyers,autres:x.autres,entrees:e,depenses:r2(x.depenses),ch:ch,fixes:fixes,gain:r2(e-x.depenses-fixes)};
+}
+function libCharge(c){return n2(c.pct)>0?fnum(n2(c.pct),Math.abs(n2(c.pct)%1)>0.001?1:0)+' % des entrées':montTxt(n2(c.montant),c.devise)+' par mois'}
+VUES.gestion=function(){
+  var F=flux(),tel=estTel(),mc=mk(TODAY());
+  /* Par défaut : le dernier mois qui a déjà des encaissements (le loyer du mois en cours arrive souvent plus tard) */
+  if(!V.gest){var dm=Object.keys(F).filter(function(m){return m<=mc&&F[m].loyers+F[m].autres>0}).sort().pop()||mc;V.gest={mois:dm,annee:+dm.slice(0,4)};}
+  var g=V.gest;
+  var b=bilanMois(g.mois,F),pc=function(v){return b.entrees>0?Math.round(v/b.entrees*100)+' %':'—'};
+  var h=entete('Gestion financière','Chaque mois : ce qui est encaissé, ce qui part dans les charges, et ce qui reste comme gain pour le projet.',
+    '<button class="btn prim" onclick="ouvrirCharge(null)">'+ico('plus')+'Ajouter une charge</button>');
+  /* Le mois choisi */
+  h+='<div class="barre-outils" style="margin-bottom:12px;display:flex;align-items:center;gap:8px"><button class="btn mini" onclick="V.gest.mois=addM(V.gest.mois,-1);V.gest.annee=+V.gest.mois.slice(0,4);rendre()" aria-label="Mois précédent">‹</button><b style="min-width:130px;text-align:center;font-size:16px">'+mLib(g.mois)+'</b><button class="btn mini" onclick="V.gest.mois=addM(V.gest.mois,1);V.gest.annee=+V.gest.mois.slice(0,4);rendre()" aria-label="Mois suivant"'+(g.mois>=mc?' disabled':'')+'>›</button>'+(g.mois!==mc?'<button class="btn mini" onclick="V.gest.mois=\''+mc+'\';V.gest.annee=+'+annee()+';rendre()">Ce mois-ci</button>':'')+'</div>';
+  var kpi=[['Encaissé',usd(b.entrees),b.autres?'dont '+usdT(b.autres)+' hors loyers':'loyers de ce mois'],
+    ['Charges fixes',usd(b.fixes),pc(b.fixes)+' de l\'encaissé'],
+    ['Autres dépenses',usd(b.depenses),'entretien, SNEL, Regideso…'],
+    ['Gain pour le projet',usd(b.gain),pc(b.gain)+' de l\'encaissé']];
+  h+='<div class="carte resume-mob">'+kpi.map(function(k){return '<div><div class="lib">'+k[0]+'</div><div class="val num">'+k[1]+'</div><div class="sous">'+k[2]+'</div></div>'}).join('')+'</div>';
+  h+='<div class="grille g4 chiffres">'+kpi.map(function(k){return '<div class="carte chiffre"><div class="lib">'+k[0]+'</div><div class="val num">'+k[1]+'</div><div class="sous">'+k[2]+'</div></div>'}).join('')+'</div>';
+  /* Répartition du mois + liste des charges */
+  var lignes=b.ch.map(function(y){return [esc(y.c.nom),y.v,'ouvrirCharge(\''+y.c.id+'\')']});
+  if(b.depenses)lignes.push(['Autres dépenses notées',b.depenses,'']);
+  var bar=function(v){return '<div class="barre-prog" style="margin:4px 0 0;height:6px"><i style="width:'+(b.entrees>0?Math.max(0,Math.min(100,v/b.entrees*100)):0)+'%"></i></div>'};
+  h+='<div class="grille g2 mt"><div class="carte"><h2>Répartition de '+mLib(g.mois)+'</h2>'+
+    (b.entrees<=0&&!b.fixes?'<div class="vide" style="padding:16px">Rien d\'encaissé ce mois-ci.</div>':
+    '<div class="tab-wrap"><table class="t rel"><thead><tr><th>Poste</th><th class="d">Montant</th><th class="d">Part</th></tr></thead><tbody>'+
+    lignes.map(function(l,i){return '<tr class="'+(l[2]?'cliq':'')+(i%2?' z':'')+'"'+(l[2]?' onclick="'+l[2]+'"':'')+'><td>'+l[0]+bar(l[1])+'</td><td class="d">'+usd(l[1])+'</td><td class="d">'+pc(l[1])+'</td></tr>'}).join('')+
+    '<tr class="tot"><td>Gain pour le projet</td><td class="d'+(b.gain<0?' neg':'')+'">'+usd(b.gain)+'</td><td class="d">'+pc(b.gain)+'</td></tr></tbody></table></div>'+
+    (b.gain<0?'<p style="margin:10px 0 0;font-size:13.5px;color:var(--doux)">Les charges dépassent ce qui est encaissé ce mois-ci.</p>':''))+'</div>';
+  /* Les charges fixes */
+  var actives=chargesDuMois(mc),loyersPrevus=D.baux.filter(function(x){return x.statut==='Actif'}).reduce(function(s,x){return s+loyerUSD(x)},0);
+  var fixesPrevus=r2(actives.reduce(function(s,c){return s+montantCharge(c,loyersPrevus)},0));
+  var toutes=(D.charges||[]).slice().sort(function(a,c){return (mk(a.au)&&mk(a.au)<mc?1:0)-(mk(c.au)&&mk(c.au)<mc?1:0)||String(a.nom).localeCompare(String(c.nom))});
+  h+='<div class="carte"><h2>Mes charges fixes</h2>'+
+    (!toutes.length?'<div class="vide" style="padding:12px 4px">Aucune charge notée.<br><br>'+(LECTURE?'':'<button class="btn prim" onclick="chargesProposees()">'+ico('plus')+'Ajouter '+CHARGES_PROPOSEES.map(function(c){return c[0].toLowerCase()+' ('+c[1]+' $)'}).join(', ')+'</button>')+'</div>':
+    '<div class="tab-wrap"><table class="t rel"><thead><tr><th>Charge</th><th class="d">Chaque mois</th><th class="x-mob">Depuis</th></tr></thead><tbody>'+
+    toutes.map(function(c,i){var fini=mk(c.au)&&mk(c.au)<mc;return '<tr class="cliq'+(i%2?' z':'')+(fini?' muet':'')+'" onclick="ouvrirCharge(\''+c.id+'\')"><td><div class="ell">'+esc(c.nom)+'</div>'+(fini?'<span class="sous muet" style="font-size:12px">terminée en '+mLib(mk(c.au))+'</span>':c.notes&&!tel?'<span class="sous muet" style="font-size:12px">'+esc(c.notes)+'</span>':'')+'</td><td class="d">'+(n2(c.pct)>0?fnum(n2(c.pct),Math.abs(n2(c.pct)%1)>0.001?1:0)+' %':mont(n2(c.montant),c.devise))+'</td><td class="x-mob">'+(mk(c.du)?mLib(mk(c.du)):'Toujours')+'</td></tr>'}).join('')+'</tbody></table></div>'+
+    '<p style="margin:12px 0 0;font-size:14px;color:var(--doux)">Si tous les loyers en cours sont payés ('+usd(loyersPrevus)+' par mois), les charges fixes en prennent <b>'+usd(fixesPrevus)+'</b>'+(loyersPrevus?' ('+Math.round(fixesPrevus/loyersPrevus*100)+' %)':'')+' et il reste <b>'+usd(r2(loyersPrevus-fixesPrevus))+'</b> pour le projet.</p>')+
+    (LECTURE||!toutes.length?'':'<button class="btn mini" style="margin-top:12px" onclick="ouvrirCharge(null)">'+ico('plus')+'Ajouter une charge</button>')+'</div></div>';
+  /* Mois par mois */
+  var an=+(g.annee||annee()),ans=[];Object.keys(F).concat([mc]).forEach(function(m){var y=+m.slice(0,4);if(ans.indexOf(y)<0)ans.push(y)});ans.sort();
+  var mois=[];for(var k=1;k<=12;k++){var m=an+'-'+pad(k);if(m>mc)break;mois.push(bilanMois(m,F));}
+  mois.reverse();
+  var T=mois.reduce(function(s,x){s.e+=x.entrees;s.f+=x.fixes;s.d+=x.depenses;s.g+=x.gain;return s},{e:0,f:0,d:0,g:0});
+  h+='<div class="carte mt"><div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px"><h2 style="margin:0">Mois par mois</h2><div class="onglets">'+ans.map(function(y){return '<button class="'+(y===an?'on':'')+'" onclick="V.gest.annee='+y+';rendre()">'+y+'</button>'}).join('')+'</div></div>'+
+    '<div class="tab-wrap"><table class="t rel"><thead><tr><th>Mois</th><th class="d">Encaissé</th><th class="d x-mob">Charges fixes</th><th class="d x-mob">Autres dépenses</th><th class="d">Gain</th></tr></thead><tbody>'+
+    mois.map(function(x,i){return '<tr class="cliq'+(i%2?' z':'')+(x.m===g.mois?' sel':'')+'" onclick="V.gest.mois=\''+x.m+'\';rendre();window.scrollTo(0,0)"><td>'+(x.m===g.mois?'<b>'+mLib(x.m)+'</b>':mLib(x.m))+(x.m===mc?' <span class="muet" style="font-size:12px">en cours</span>':'')+'</td><td class="d">'+usd(x.entrees)+'</td><td class="d x-mob">'+usd(x.fixes)+'</td><td class="d x-mob">'+usd(x.depenses)+'</td><td class="d'+(x.gain<0?' neg':'')+'">'+usd(x.gain)+'</td></tr>'}).join('')+
+    '<tr class="tot"><td>Total '+an+'</td><td class="d">'+usd(T.e)+'</td><td class="d x-mob">'+usd(T.f)+'</td><td class="d x-mob">'+usd(T.d)+'</td><td class="d'+(T.g<0?' neg':'')+'">'+usd(T.g)+'</td></tr></tbody></table></div>'+
+    '<p style="margin:10px 0 0;font-size:13px;color:var(--doux)">Chaque paiement compte dans le mois qu\'il règle (le loyer de mars compte en mars, même payé en avril). Un loyer pris sur la garantie compte comme encaissé. Les garanties versées ne comptent pas : elles appartiennent aux locataires. '+(tel?'Touche un mois pour voir sa répartition. ':'')+'Le gain sert au calcul « récupéré » de la rubrique Construction.</p></div>';
+  return h;
+};
+function ouvrirCharge(id){
+  var c=id?(D.charges||[]).find(function(x){return x.id===id}):{id:'',nom:'',montant:'',devise:'USD',pct:'',du:'',au:'',notes:''};
+  if(!c)return;var pct=n2(c.pct)>0;
+  fenetre(id?'Charge '+esc(c.nom):'Ajouter une charge','<form id="fCh" onsubmit="chargeValider(event,\''+(id||'')+'\')"><div class="champs">'+
+    '<label class="ch plein">Nom de la charge<input name="nom" value="'+esc(c.nom)+'" required list="nomsCharges" placeholder="Ex. : salaire ouvrier, entretien, impôts…"><datalist id="nomsCharges">'+['Besoin personnel','Salaire ouvrier','Redevance famille','Gardiennage','Entretien courant','Impôts et taxes','Réserve pour imprévus'].map(function(x){return '<option value="'+x+'">'}).join('')+'</datalist></label>'+
+    '<label class="ch plein">Comment la calculer ?<select name="genre" onchange="var f=this.form;f.querySelectorAll(\'.si-montant\').forEach(function(x){x.style.display=this.value===\'pct\'?\'none\':\'\'},this);f.querySelector(\'.si-pct\').style.display=this.value===\'pct\'?\'\':\'none\'"><option value="montant"'+(pct?'':' selected')+'>Même montant chaque mois</option><option value="pct"'+(pct?' selected':'')+'>Pourcentage de ce qui est encaissé</option></select></label>'+
+    '<label class="ch si-montant"'+(pct?' style="display:none"':'')+'>Montant par mois<input type="number" inputmode="decimal" step="0.01" min="0" name="montant" value="'+esc(pct?'':c.montant)+'"></label>'+
+    '<label class="ch si-montant"'+(pct?' style="display:none"':'')+'>Devise<select name="devise"><option value="USD"'+(c.devise!=='CDF'?' selected':'')+'>Dollars (USD)</option><option value="CDF"'+(c.devise==='CDF'?' selected':'')+'>Francs congolais (FC)</option></select></label>'+
+    '<label class="ch plein si-pct"'+(pct?'':' style="display:none"')+'>Pourcentage<input type="number" inputmode="decimal" step="0.1" min="0" max="100" name="pct" value="'+esc(pct?c.pct:'')+'" placeholder="Ex. : 10"><span class="aide">Calculé chaque mois sur les loyers et autres recettes encaissés.</span></label>'+
+    '<label class="ch">Depuis le mois<input type="month" name="du" value="'+mk(c.du)+'"><span class="aide">Vide : depuis toujours (2025 compris).</span></label>'+
+    '<label class="ch">Jusqu\'au mois (inclus)<input type="month" name="au" value="'+mk(c.au)+'"><span class="aide">Vide : la charge continue.</span></label>'+
+    '<label class="ch plein">Notes<input name="notes" value="'+esc(c.notes)+'" placeholder="Ex. : payé à qui, quand…"></label></div></form>'+
+    (id?'<p style="font-size:13px;color:var(--doux);margin:12px 0 0">Si le montant change, mieux vaut terminer cette charge (« Jusqu\'au mois ») et en ajouter une nouvelle : les mois passés gardent l\'ancien montant.</p>':''),
+    (id?'<button class="btn danger gauche" onclick="supprimer(\'Charges\',\''+id+'\',\'cette charge\')">Supprimer</button>':'')+'<button class="btn" onclick="fermer()">Annuler</button><button class="btn prim" onclick="document.getElementById(\'fCh\').requestSubmit()">Enregistrer</button>');
+}
+function chargeValider(ev,id){ev.preventDefault();var f=ev.target,pct=f.genre.value==='pct',m=pct?0:n2(f.montant.value),dev=pct?'USD':f.devise.value,ancien=id?(D.charges||[]).find(function(x){return x.id===id}):null;
+  if(pct&&!(n2(f.pct.value)>0)){toast('Indique le pourcentage.',1);return;}
+  if(!pct&&!(m>0)){toast('Indique le montant.',1);return;}
+  if(f.du.value&&f.au.value&&f.au.value<f.du.value){toast('« Jusqu\'au mois » est avant « Depuis le mois ».',1);return;}
+  var usdV=dev==='CDF'?(ancien&&ancien.devise==='CDF'&&n2(ancien.montant)===m?n2(ancien.usd):r2(m/n2(P.taux||1))):m;
+  enregistrer('Charges',{id:id,nom:f.nom.value.trim(),montant:pct?'':m,devise:dev,usd:pct?'':usdV,pct:pct?n2(f.pct.value):'',du:f.du.value?f.du.value+'-01':'',au:f.au.value?f.au.value+'-01':'',notes:f.notes.value.trim()},id?'Charge modifiée':'Charge ajoutée','Charge — '+f.nom.value.trim());}
+/** Ajoute d'un coup les charges données par Jean. */
+function chargesProposees(){
+  var du='';
+  var op=soumettre({kind:'save',list:CHARGES_PROPOSEES.map(function(c){return {table:'Charges',obj:{id:'',nom:c[0],montant:c[1],devise:'USD',usd:c[1],pct:'',du:du,au:'',notes:''}}}),desc:'Charges fixes'});
+  if(op)toastAnnulable('Charges ajoutées',op.uid);}
 
 /* ---------- Historique et retour en arrière (système inchangé) ---------- */
 VUES.modifs=function(){
@@ -2454,7 +2557,7 @@ function fenetre(titre,corps,pieds,large){
   if(LECTURE)lectureSeule(document.getElementById('couche'));
 }
 /** Visiteur : retire les boutons qui saisissent, corrigent ou suppriment ; les fiches restent lisibles. */
-var RE_EDITION=/ajouterSurBail|ouvrirBail|ouvrirPref|ouvrirReduction\(null|facturerReparation|ouvrirSortie|encBail|supprimer|ouvrirTravaux\(null|formLocal|payerRapide|editerOp\(\)|confirmerAnnulation|reglagesConstruction|renumeroter|retirerFond|choisirFond|appDefaut|requestSubmit|sortieValider|aller\('encaisser'|accesVisiteurs/;
+var RE_EDITION=/ajouterSurBail|ouvrirBail|ouvrirPref|ouvrirReduction\(null|facturerReparation|ouvrirSortie|encBail|supprimer|ouvrirTravaux\(null|formLocal|payerRapide|editerOp\(\)|confirmerAnnulation|reglagesConstruction|ouvrirCharge\(null|chargesProposees|renumeroter|retirerFond|choisirFond|appDefaut|requestSubmit|sortieValider|aller\('encaisser'|accesVisiteurs/;
 function lectureSeule(r){
   if(!r)return;
   r.querySelectorAll('[onclick]').forEach(function(el){if(!RE_EDITION.test(el.getAttribute('onclick')))return;

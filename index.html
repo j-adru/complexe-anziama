@@ -24,10 +24,10 @@
   --nuit:#0E1A2B; --or:#B8924A; --creme:#FBF5E2;
   --f-titre:"Manrope"; --f-texte:"Manrope";
   --encre:color-mix(in srgb,var(--nuit) 86%,#fff); --barre-dep:var(--encre);
-  --page:#E9ECF1;
-  --texte:#18202E; --doux:#555D6C; --pale:#7E8592;
-  --verre:rgba(255,255,255,.66); --verre-fort:rgba(255,255,255,.9); --verre-leger:rgba(255,255,255,.42);
-  --bord-verre:rgba(255,255,255,.75); --ambre:rgba(217,177,102,.30);
+  --page:#EFEBE2;
+  --texte:#121926; --doux:#4A5263; --pale:#6B7384;
+  --verre:rgba(255,255,255,.82); --verre-fort:rgba(255,255,255,.94); --verre-leger:rgba(255,255,255,.55);
+  --bord-verre:rgba(255,255,255,.9); --ambre:rgba(184,146,74,.30);
   --trait:rgba(24,32,46,.14); --trait2:rgba(24,32,46,.08);
   --champ:rgba(255,255,255,.9); --champ-bord:rgba(24,32,46,.18);
   --ligne-alt:color-mix(in srgb,var(--creme) 72%,transparent);
@@ -36,8 +36,30 @@
   --or-texte:color-mix(in srgb,var(--or) 70%,#000); --or-pale:color-mix(in srgb,var(--or) 18%,transparent);
   --ok:#24704B; --ok-fond:rgba(46,106,78,.13); --ko:#A12C2C; --ko-fond:rgba(156,47,47,.12);
   --att:#8A5A00; --att-fond:rgba(201,140,20,.15); --gris-fond:rgba(24,32,46,.07); --bleu:#2D5B8A; --bleu-fond:rgba(45,91,138,.12);
-  --ombre:0 10px 34px rgba(10,18,32,.14);
+  --ombre:0 10px 30px -8px rgba(10,18,32,.16);
   --rayon:14px;
+  /* Boutons : relief doux, contour doré, enfoncement au toucher */
+  --btn-fond:linear-gradient(180deg,#FFFFFF,#F4EEE1);
+  --btn-bord:rgba(184,146,74,.42);
+  --btn-ombre:inset 0 1px 0 rgba(255,255,255,.95),0 1px 2px rgba(14,26,43,.10),0 6px 14px -5px rgba(14,26,43,.22);
+  --btn-ombre-presse:inset 0 2px 4px rgba(14,26,43,.14);
+  --btn-on:linear-gradient(180deg,#FFF9EC,#F1E3C2);
+}
+:root[data-theme="dark"]{
+  --btn-fond:linear-gradient(180deg,rgba(255,255,255,.13),rgba(255,255,255,.04));
+  --btn-bord:rgba(217,189,126,.32);
+  --btn-ombre:inset 0 1px 0 rgba(255,255,255,.14),0 1px 2px rgba(0,0,0,.45),0 8px 18px -6px rgba(0,0,0,.6);
+  --btn-ombre-presse:inset 0 2px 5px rgba(0,0,0,.45);
+  --btn-on:linear-gradient(180deg,rgba(217,189,126,.30),rgba(217,189,126,.12));
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --btn-fond:linear-gradient(180deg,rgba(255,255,255,.13),rgba(255,255,255,.04));
+    --btn-bord:rgba(217,189,126,.32);
+    --btn-ombre:inset 0 1px 0 rgba(255,255,255,.14),0 1px 2px rgba(0,0,0,.45),0 8px 18px -6px rgba(0,0,0,.6);
+    --btn-ombre-presse:inset 0 2px 5px rgba(0,0,0,.45);
+    --btn-on:linear-gradient(180deg,rgba(217,189,126,.30),rgba(217,189,126,.12));
+  }
 }
 :root[data-theme="dark"]{
   --texte:#ECEFF4; --doux:#B3BBC8; --pale:#8C95A5;
@@ -303,7 +325,7 @@ label.ch .aide{font-weight:400;color:var(--pale);font-size:12.5px}
 /* Relevés : en-tête en largeur, lignes sans retour à la ligne, totaux clairs */
 .rel-tete{display:flex;flex-wrap:wrap;gap:10px 36px;margin-bottom:18px;font-size:14px}
 .rel-tete>div{white-space:nowrap}
-.rel-tete span{display:block;color:var(--doux);font-size:12.5px}
+.rel-tete>div>span{display:block;color:var(--doux);font-size:12.5px}
 table.t.rel td{white-space:nowrap}
 table.t.rel .m-c{display:none}
 .rel-totaux{margin:14px 0 0 auto;width:fit-content;min-width:320px;max-width:100%;font-size:14px}
@@ -322,6 +344,37 @@ table.t.rel .m-c{display:none}
 
 /* Barre du bas (téléphone) */
 .navmob{display:none}
+
+/* Boutons : un vrai relief, partout */
+.btn,.choix button,.portes-choix button,.liste-locaux button{background:var(--btn-fond);border:1px solid var(--btn-bord);box-shadow:var(--btn-ombre);transition:transform .12s ease,box-shadow .12s ease,border-color .12s}
+.btn:active,.choix button:active,.portes-choix button:active,.liste-locaux button:active{transform:scale(.97);box-shadow:var(--btn-ombre-presse)}
+.btn.prim{background:linear-gradient(180deg,#1C2D47,#0E1A2B);border-color:rgba(217,189,126,.6);color:#F3E6C6;box-shadow:inset 0 1px 0 rgba(255,255,255,.14),0 1px 2px rgba(14,26,43,.25),0 8px 18px -6px rgba(14,26,43,.45)}
+:root[data-theme="dark"] .btn.prim{background:linear-gradient(180deg,#E4C98C,#B8924A);color:#14100A;border-color:rgba(255,236,190,.7);box-shadow:inset 0 1px 0 rgba(255,255,255,.45),0 1px 2px rgba(0,0,0,.4),0 8px 20px -6px rgba(184,146,74,.55)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .btn.prim{background:linear-gradient(180deg,#E4C98C,#B8924A);color:#14100A;border-color:rgba(255,236,190,.7);box-shadow:inset 0 1px 0 rgba(255,255,255,.45),0 1px 2px rgba(0,0,0,.4),0 8px 20px -6px rgba(184,146,74,.55)}}
+.choix button.on,.portes-choix button.on{background:var(--btn-on);border-color:var(--or);box-shadow:0 0 0 2px color-mix(in srgb,var(--or) 45%,transparent),var(--btn-ombre)}
+/* Onglets façon Apple : un rail creux, l'onglet choisi en relief */
+.onglets{padding:3px;gap:2px;background:var(--gris-fond);border:1px solid var(--trait2);box-shadow:inset 0 1px 2px rgba(0,0,0,.08)}
+.onglets button{border-radius:9px;min-height:36px;padding:7px 14px}
+.onglets button.on{background:var(--btn-fond);color:var(--texte);box-shadow:var(--btn-ombre);border:1px solid var(--btn-bord)}
+/* Choix « qu'est-ce qui a été payé » : six boutons de même taille */
+.choix{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.choix button{min-width:0;height:66px;padding:10px 14px;display:flex;flex-direction:column;justify-content:center}
+.choix button b,.choix button span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.portes-choix button{display:flex;flex-direction:column;justify-content:center;min-width:0}
+.portes-choix .qui{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* Infos en colonnes, sans cadre */
+.infos-ligne{display:flex;flex-wrap:wrap;gap:10px 26px;margin:2px 0 18px;font-size:14px}
+.infos-ligne>div{white-space:nowrap}
+.infos-ligne>div>span{display:block;color:var(--doux);font-size:12.5px}
+.infos-ligne b{font-size:16px}
+.barre-outils{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.barre-outils .doc-btn{margin-left:8px}
+.mob-seul{display:none}
+.ell{max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.nw{white-space:nowrap}
+.onglets .court{display:none}
+.resume-mob{display:none}
+.actions-accueil .court{display:none}
 
 @media print{
   html:root,html:root[data-theme],html:root:not([data-theme="light"]){--texte:#18202E;--doux:#555D6C;--pale:#7E8592;--ligne-alt:#FBF5E2;--entete:#0E1A2B;--entete-texte:#fff;--trait:#DDD;--trait2:#E5E0D3;--verre:#fff;--verre-leger:#fff;--or-pale:#F1E7CF;--ko:#A12C2C;--ok:#24704B;--att:#8A5A00;--gris-fond:#EEE}
@@ -420,6 +473,67 @@ table.t.rel .m-c{display:none}
   .rel-totaux{width:auto;min-width:0}
   .rel-totaux>div{white-space:normal}
   .rel-totaux>div b{white-space:nowrap}
+  table.t.rel .ell{max-width:150px}
+  table.t.rel.parmois .ell{max-width:104px}
+  table.t.rel th,table.t.rel td{padding-left:5px;padding-right:5px}
+  table.t.rel .pastille{padding:2px 7px}
+  table.t.rel tr.grp td,table.t.rel tr.tot td{display:table-cell;text-align:left}
+  table.t.rel tr.grp td{background:color-mix(in srgb,var(--nuit) 82%,transparent);color:#F3E6C6;padding:9px 10px;white-space:normal!important}
+  table.t.rel tr.grp td .sub{color:#D9BD7E;font-weight:500;font-size:12.5px}
+  table.t.rel tr.nonpaye td{background:var(--ko-fond)}
+  table.t.rel tr.tot td{background:var(--or-pale);font-weight:700;white-space:normal!important}
+  table.t.rel td .muet-mob{display:block;font-size:11.5px;color:var(--pale);font-weight:400}
+}
+/* Téléphone : moins de blocs, infos en colonnes */
+@media screen and (max-width:860px){
+  .mob-seul{display:revert}
+  .pc-seul{display:none!important}
+  .filtres.pliable:not(.ouvert){display:none}
+  .filtres{gap:8px}
+  .barre-outils{gap:8px}
+  .barre-outils .doc-btn{margin-left:auto}
+  .onglets button{padding:7px 12px;font-size:14px}
+  .onglets .long{display:none}
+  .onglets .court{display:inline}
+  .entete{margin-bottom:14px}
+  .entete p{font-size:13.5px}
+  /* Accueil */
+  .actions-accueil{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;width:100%}
+  .actions-accueil .btn{width:100%;height:48px;min-height:48px;padding:0 10px}
+  .actions-accueil .long{display:none}
+  .actions-accueil .court{display:inline}
+  .grille.g4.chiffres{display:none}
+  .resume-mob{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px 16px}
+  .resume-mob .lib{font-size:12.5px;color:var(--doux)}
+  .resume-mob .val{font-size:21px;font-weight:700;margin-top:2px}
+  .resume-mob .sous{font-size:12px;color:var(--pale);margin-top:1px}
+  .resume-mob .rouge .val{color:var(--ko)}
+  .resume-mob .note{grid-column:1/-1;font-size:12.5px;color:var(--doux);border-top:1px solid var(--trait2);padding-top:10px}
+  .mois-detail{gap:14px}
+  .mois-detail>div:first-child{display:flex;align-items:center;gap:22px}
+  .anneau{width:128px;height:128px;margin:0;flex:none}
+  .anneau svg{width:128px;height:128px}
+  .anneau .centre b{font-size:22px}
+  .anneau .centre span{font-size:11.5px}
+  .mois-detail .legende{margin-top:0!important;font-size:14px;gap:8px!important}
+  .totaux-mois{grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:8px}
+  .totaux-mois div>span{font-size:12px}
+  .totaux-mois div>b{font-size:17px}
+  /* Encaisser */
+  .portes-choix{grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}
+  .portes-choix button{height:72px;padding:7px 8px;border-radius:12px}
+  .portes-choix .id{font-size:15px}
+  .portes-choix .id .idb{display:none}
+  .portes-choix .qui{font-size:11.5px;font-weight:500;margin-top:1px}
+  .portes-choix .etat-l{margin-top:4px;font-size:10.5px}
+  .portes-choix .etat-l .pastille{font-size:10.5px;padding:1px 6px}
+  .choix{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+  .choix button{height:60px;padding:8px 12px}
+  .choix button b{font-size:14px}
+  .choix button span{font-size:11.5px}
+  .infos-ligne{gap:8px 20px;margin-bottom:14px}
+  .infos-ligne b{font-size:15px}
+  .form-actions .btn{flex:1 1 0}
 }
 </style>
 </head>
@@ -535,6 +649,8 @@ var IC={
   banque:'<path d="M3 10l9-6 9 6M5 10v8M9.5 10v8M14.5 10v8M19 10v8M3 21h18"/>',
   modifs:'<path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5M12 7v5l3 2"/>',
   params:'<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/>',
+  partager:'<path d="M12 3v12M8 7l4-4 4 4"/><path d="M6 11H5a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-8a1 1 0 0 0-1-1h-1"/>',
+  filtre:'<path d="M4 5h16l-6 8v5l-4 2v-7z"/>',
   imprimer:'<path d="M6 9V3h12v6M6 18H4a1 1 0 0 1-1-1v-6a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v6a1 1 0 0 1-1 1h-2"/><path d="M6 14h12v7H6z"/>',
   plus:'<path d="M12 5v14M5 12h14"/>',
   sortie:'<path d="M15 3h4a1 1 0 0 1 1 1v16a1 1 0 0 1-1 1h-4M10 17l5-5-5-5M15 12H3"/>',
@@ -825,7 +941,10 @@ function appliquerFond(p){
   if(id==='auto')id=themeEffectif()==='dark'?'nuit-or':'aube';
   if(id==='perso'&&MEDIAS.fond&&MEDIAS.fond.data){f.style.background='url("'+MEDIAS.fond.data+'") center/cover no-repeat';sombre=MEDIAS.fond.sombre!==false;}
   else{var F=FONDS[id]||FONDS['nuit-or'];f.style.background=F.css||'';sombre=F.sombre===null?themeEffectif()==='dark':F.sombre;}
-  f.style.setProperty('--voile',sombre?'rgba(5,10,18,.18)':'rgba(255,255,255,.05)');
+  var voile=sombre?'rgba(5,10,18,.18)':'rgba(255,255,255,.05)',th=themeEffectif();
+  if(th==='light'&&sombre){voile='rgba(244,240,231,.80)';sombre=false;}
+  else if(th==='dark'&&!sombre){voile='rgba(8,14,26,.74)';sombre=true;}
+  f.style.setProperty('--voile',voile);
   document.body.classList.toggle('fond-sombre',!!sombre);document.body.classList.toggle('fond-clair',!sombre);
 }
 function appliquerApparence(p){
@@ -950,7 +1069,10 @@ function aller(v,opts){V.vue=v;if(opts)Object.keys(opts).forEach(function(k){V[k
 function rendre(){if(!D)return;nav();document.getElementById('main').innerHTML=(VUES[V.vue]||VUES.accueil)();if(V.vue==='encaisser')encMaj();if(V.vue==='depenses')depMaj();}
 /** Pour les mises à jour qui arrivent de Google : ne redessine pas l'écran pendant que tu remplis un formulaire. */
 function rendreSiLibre(){var ae=document.activeElement;if(ae&&ae.closest&&ae.closest('#main form, #main .filtres')){nav();return;}rendre();}
-function entete(t,sous,outils){return '<div class="entete"><div><h1>'+t+'</h1>'+(sous?'<p>'+sous+'</p>':'')+'</div><div class="outils">'+(outils||'')+'</div></div>';}
+function estTel(){return window.matchMedia?matchMedia('(max-width:860px)').matches:window.innerWidth<=860}
+/** Bouton d'un document : « Partager » (PDF) sur téléphone, « Imprimer » sur ordinateur. */
+function btnDoc(action,mini){return '<button class="btn'+(mini?' mini':'')+' doc-btn" onclick="'+action+'">'+(estTel()?ico('partager')+'Partager':ico('imprimer')+'Imprimer')+'</button>';}
+function entete(t,sous,outils){return '<div class="entete"><div><h1>'+t+'</h1>'+(sous?'<p>'+sous+'</p>':'')+'</div>'+(/^<div class="outils/.test(outils||'')?outils:'<div class="outils">'+(outils||'')+'</div>')+'</div>';}
 function selAnnee(val,fn,tout){return '<select class="mini-champ" onchange="'+fn+'(this.value)">'+(tout?'<option value="tout"'+(val==='tout'?' selected':'')+'>Toutes</option>':'')+annees().map(function(y){return '<option'+(String(val)===y?' selected':'')+'>'+y+'</option>'}).join('')+'</select>';}
 function optsBaux(sel,filtre){
   return D.baux.slice().sort(function(a,b){return a.local.localeCompare(b.local)||(b.debut||'').localeCompare(a.debut||'')})
@@ -973,11 +1095,18 @@ VUES.accueil=function(){
   var impAnciens=D.baux.filter(function(b){return b.statut!=='Actif'}).reduce(function(s,b){return s+ST[b.id].dette},0);
   var garanties=D.baux.filter(function(b){return b.statut==='Actif'}).reduce(function(s,b){return s+ST[b.id].g.solde},0);
   var h=entete('Bonjour','Situation du complexe au '+fd(TODAY()),
-    '<button class="btn prim" onclick="aller(\'encaisser\',{enc:{bail:\'\'}})">'+ico('encaisser')+'Encaisser un paiement</button>'+
-    '<button class="btn" onclick="aller(\'depenses\')">'+ico('depense')+'Nouvelle dépense</button>'+
-    '<button class="btn" onclick="ouvrirBail()">'+ico('plus')+'Nouveau locataire</button>'+
-    '<button class="btn" onclick="ouvrirSortie()">'+ico('sortie')+'Sortie d\'un locataire</button>');
-  h+='<div class="grille g4">'+
+    '<div class="outils actions-accueil"><button class="btn prim" onclick="aller(\'encaisser\',{enc:{bail:\'\'}})">'+ico('encaisser')+'<span class="long">Encaisser un paiement</span><span class="court">Encaisser</span></button>'+
+    '<button class="btn" onclick="aller(\'depenses\')">'+ico('depense')+'<span class="long">Nouvelle dépense</span><span class="court">Dépense</span></button>'+
+    '<button class="btn" onclick="ouvrirBail()">'+ico('plus')+'<span class="long">Nouveau locataire</span><span class="court">Locataire</span></button>'+
+    '<button class="btn" onclick="ouvrirSortie()">'+ico('sortie')+'<span class="long">Sortie d\'un locataire</span><span class="court">Sortie</span></button></div>');
+  var nRet=det.lignes.filter(function(x){return x.l.reste>0}).length;
+  h+='<div class="carte resume-mob">'+
+    '<div><div class="lib">Loyers de '+MOISC[+dernier.slice(5,7)-1]+' '+dernier.slice(0,4)+'</div><div class="val num">'+usd(det.recu)+'</div><div class="sous">sur '+usd(det.attendu)+(nRet?' · '+nRet+' en retard':'')+'</div></div>'+
+    '<div class="'+(impayes>0?'rouge':'')+'"><div class="lib">Impayés actuels</div><div class="val num">'+usd(impayes)+'</div><div class="sous">dus à ce jour</div></div>'+
+    '<div><div class="lib">Perçus en '+y+'</div><div class="val num">'+usd(t.loyers)+'</div><div class="sous">'+(t.recouvrement!=null?Math.round(t.recouvrement*100)+' % des loyers dus':'—')+'</div></div>'+
+    '<div><div class="lib">Garanties détenues</div><div class="val num">'+usd(garanties)+'</div><div class="sous">à rendre au départ</div></div>'+
+    (impAnciens>0.009?'<div class="note">Anciens locataires : '+usd(impAnciens)+' encore dus.</div>':'')+'</div>';
+  h+='<div class="grille g4 chiffres">'+
     '<div class="carte chiffre"><div class="lib">Loyers de '+mLib(dernier)+'</div><div class="val num">'+usd(det.recu)+'</div><div class="sous">sur '+usd(det.attendu)+' attendus · '+det.lignes.filter(function(x){return x.l.reste>0}).length+' local(aux) pas encore à jour</div></div>'+
     '<div class="carte chiffre'+(impayes>0?' rouge':'')+'"><div class="lib">Impayés des locataires actuels</div><div class="val num">'+usd(impayes)+'</div><div class="sous">loyers dus et pas encore payés, à ce jour'+(impAnciens>0.009?'<br>Anciens locataires : '+usd(impAnciens)+' encore notés. Règle-les dans leur fiche.':'')+'</div></div>'+
     '<div class="carte chiffre"><div class="lib">Loyers perçus en '+y+'</div><div class="val num">'+usd(t.loyers)+'</div><div class="sous">'+(t.recouvrement!=null?Math.round(t.recouvrement*100)+' % des loyers dus ont été payés':'—')+'</div></div>'+
@@ -1052,12 +1181,12 @@ function graphique(bil){
 
 /* ---------- Encaisser ---------- */
 var GENRES=[
-  ['complet','Loyer payé en entier','un ou plusieurs mois'],
+  ['complet','Loyer complet','un ou plusieurs mois'],
   ['partiel','Paiement partiel','une partie du loyer'],
-  ['garantie','Pris sur la garantie','le loyer est retiré de sa garantie'],
-  ['charge','Part SNEL / Regideso','sa part de la facture du mois'],
-  ['reparation','Réparation remboursée','une réparation à sa charge'],
-  ['complement','Complément de garantie','il remet de l\'argent en garantie']
+  ['garantie','Sur la garantie','loyer pris sur la garantie'],
+  ['charge','SNEL / Regideso','sa part de la facture'],
+  ['reparation','Réparation','à sa charge'],
+  ['complement','Garantie +','il complète sa garantie']
 ];
 VUES.encaisser=function(){
   var e=V.enc,actifs=D.baux.filter(function(b){return b.statut==='Actif'}).sort(function(a,b){return a.local.localeCompare(b.local)});
@@ -1070,7 +1199,8 @@ VUES.encaisser=function(){
   if(!e.bail||!bail(e.bail))return h;
   var b=bail(e.bail),s=ST[b.id];
   h+='<div class="carte mt"><h2>2. Qu\'est-ce qui a été payé ?</h2>';
-  h+='<div class="resume-bail"><div><span>Locataire</span><b>'+esc(nomBail(b))+' <span class="idb">'+b.id+'</span></b></div><div><span>Loyer</span><b class="num">'+mont(b.loyer,b.devise)+'</b></div><div><span>Reste dû</span><b class="num" style="color:'+(s.dette>0?'var(--ko)':'var(--ok)')+'">'+usd(s.dette)+'</b></div><div><span>Garantie en caisse</span><b class="num">'+usd(s.g.solde)+'</b></div></div>';
+  var lb=local(b.local)||{};
+  h+='<div class="infos-ligne"><div><span>Locataire</span><b>'+esc(nomBail(b))+'</b></div><div><span>Local</span><b>'+b.local+'</b>'+(lb.description?' · '+esc(lb.description):'')+'</div><div><span>Bail</span>'+b.id+'</div><div><span>Loyer</span><b class="num">'+mont(b.loyer,b.devise)+'</b></div><div><span>Reste dû</span><b class="num" style="color:'+(s.dette>0?'var(--ko)':'var(--ok)')+'">'+usd(s.dette)+'</b></div><div><span>Garantie en caisse</span><b class="num">'+usd(s.g.solde)+'</b></div></div>';
   var genres=b.statut==='Actif'?GENRES:GENRES.filter(function(g){return ['complet','partiel','charge','reparation'].indexOf(g[0])>=0});
   h+='<div class="choix" style="margin-bottom:18px">'+genres.map(function(g){return '<button class="'+(e.genre===g[0]?'on':'')+'" onclick="encGenre(\''+g[0]+'\')"><b>'+g[1]+'</b><span>'+g[2]+'</span></button>'}).join('')+'</div>';
   h+='<form id="fEnc" onsubmit="encValider(event)" oninput="encMaj()" onchange="encMaj()"><div class="champs">';
@@ -1093,7 +1223,7 @@ VUES.encaisser=function(){
   h+='<label class="ch">Date et heure du paiement<input name="date" type="datetime-local" value="'+MAINTENANT()+'"><span class="aide">Maintenant par défaut.</span></label>';
   if(e.genre!=='garantie'){h+='<label class="ch">Payé comment ?<select name="mode">'+optsModes('Espèces')+'</select></label>';h+='<label class="ch">Référence<input name="reference" placeholder="N° de transaction, de dépôt…"><span class="aide">Pour le mobile money : le code reçu par SMS.</span></label>';}
   h+='<label class="ch plein">Commentaire<input name="commentaire" placeholder="Facultatif"></label>';
-  h+='</div><div class="reste-info" id="infoEnc"></div><div style="display:flex;justify-content:flex-end;gap:8px;margin-top:16px;flex-wrap:wrap"><button type="button" class="btn" onclick="aller(\'encaisser\',{enc:{bail:\'\'}})">Annuler</button><button class="btn prim" type="submit">Enregistrer le paiement</button></div></form></div>';
+  h+='</div><div class="reste-info" id="infoEnc"></div><div class="form-actions" style="display:flex;justify-content:flex-end;gap:8px;margin-top:16px;flex-wrap:wrap"><button type="button" class="btn" onclick="aller(\'encaisser\',{enc:{bail:\'\'}})">Annuler</button><button class="btn prim" type="submit">Enregistrer le paiement</button></div></form></div>';
   return h;
 };
 function encBail(id){if(!id)return;V.enc.bail=id;var b=bail(id);V.enc.genre=b&&b.statut!=='Actif'&&ST[id].reste<=0?(ST[id].ch.reste>0?'charge':'reparation'):'complet';V.enc._init=true;rendre()}
@@ -1438,8 +1568,10 @@ VUES.operations=function(){
     return true;}).sort(function(a,b){return (periode(b)||'').localeCompare(periode(a)||'')||(a.local||'').localeCompare(b.local||'')||(a.virtuel?1:0)-(b.virtuel?1:0)||String(b.date).localeCompare(String(a.date))});
   var grps=Object.keys(TYPES).map(function(t){return TYPES[t].grp}).filter(function(v,i,a){return a.indexOf(v)===i});
   var h=entete('Toutes les opérations','Regroupées par mois, les plus récents en haut. Les loyers non payés apparaissent en rouge : touche-les pour encaisser. Touche une opération pour la corriger.',
-    '<button class="btn" onclick="imprimerOps()">'+ico('imprimer')+'Imprimer</button><button class="btn prim" onclick="editerOp()">'+ico('plus')+'Ajouter une opération</button>');
-  h+='<div class="filtres">'+
+    btnDoc('imprimerOps()')+'<button class="btn prim" onclick="editerOp()">'+ico('plus')+'Ajouter une opération</button>');
+  var nf=(F.annee!=='tout'?1:0)+(F.mois?1:0)+(F.local?1:0)+(F.bail?1:0)+(F.grp?1:0)+(F.q?1:0);
+  h+='<button class="btn mini mob-seul" style="margin-bottom:10px" onclick="V.opsPli=!V.opsPli;rendre()">'+ico('filtre')+(V.opsPli?'Masquer les filtres':'Filtres'+(nf?' ('+nf+')':''))+'</button>';
+  h+='<div class="filtres pliable'+(V.opsPli?' ouvert':'')+'">'+
     '<div class="filtre">Année<select onchange="opsF(\'annee\',this.value)"><option value="tout"'+(F.annee==='tout'?' selected':'')+'>Toutes</option>'+annees().map(function(y){return '<option'+(F.annee===y?' selected':'')+'>'+y+'</option>'}).join('')+'</select></div>'+
     '<div class="filtre">Mois<select onchange="opsF(\'mois\',this.value)"><option value="">Tous</option>'+MOIS.map(function(m,i){return '<option value="'+pad(i+1)+'"'+(F.mois===pad(i+1)?' selected':'')+'>'+m+'</option>'}).join('')+'</select></div>'+
     '<div class="filtre">Local<select onchange="opsF(\'local\',this.value)">'+optsLocaux(F.local,'Tous')+'</select></div>'+
@@ -1449,7 +1581,8 @@ VUES.operations=function(){
     '<div class="filtre">Regrouper par<select onchange="opsF(\'groupe\',this.value)">'+[['','Ne pas regrouper'],['mois','Mois'],['local','Local'],['bail','Locataire'],['type','Type d\'opération']].map(function(x){return '<option value="'+x[0]+'"'+(F.groupe===x[0]?' selected':'')+'>'+x[1]+'</option>'}).join('')+'</select></div>'+
     '<div class="filtre">Recherche<input value="'+esc(F.q)+'" placeholder="Nom, n° de reçu, n° de bail…" onchange="opsF(\'q\',this.value)"></div>'+
     (F.annee!=='tout'||F.mois||F.local||F.bail||F.grp||F.q?'<button class="btn mini" onclick="V.ops={annee:\'tout\',mois:\'\',local:\'\',bail:\'\',grp:\'\',groupe:V.ops.groupe,q:\'\',np:V.ops.np};rendre()">Effacer les filtres</button>':'')+'</div>';
-  h+='<div id="zoneOps">'+tableauOps(liste,F.groupe)+'</div>';
+  V._opsListe=liste;
+  h+='<div id="zoneOps">'+tableauOps(liste,F.groupe,estTel())+'</div>';
   return h;
 };
 function opsF(k,v){V.ops[k]=v;rendre()}
@@ -1460,8 +1593,9 @@ function cleGroupe(j,g){var b=bail(j.bail);
   if(g==='type')return [j.virtuel?'Non payé':j.type,j.virtuel?'Non payés':j.type];
   return ['',''];
 }
-function tableauOps(liste,g){
+function tableauOps(liste,g,tel){
   if(!liste.length)return '<div class="carte vide">Aucune opération pour ces filtres.</div>';
+  if(tel)return tableauOpsTel(liste,g);
   var tR=0,tD=0,tN=0,h='<div class="tab-wrap"><table class="t"><thead><tr><th>Date</th><th>Pour le mois de</th><th>Local</th><th>Bail</th><th>Locataire</th><th>Opération</th><th class="d">Montant</th><th class="d">En USD</th><th>Mode / référence</th><th>Reçu</th></tr></thead><tbody>';
   var groupes=[],idx={};
   liste.forEach(function(j){var k=cleGroupe(j,g);if(idx[k[0]]===undefined){idx[k[0]]=groupes.length;groupes.push({k:k[0],lib:k[1],l:[]})}groupes[idx[k[0]]].l.push(j)});
@@ -1476,6 +1610,23 @@ function tableauOps(liste,g){
       h+='<tr class="cliq'+(zi++%2?' z':'')+'" onclick="'+(estCommune(j)?'ouvrirFacture':'editerOp')+'(\''+j.id+'\')"><td>'+fdh(j.date)+(j.estimee==='Oui'?'<span class="estime" title="Date estimée : la vraie date de paiement n\'est pas connue">estimée</span>':'')+attenteIco(j)+'</td><td>'+(j.mois?mLib(mk(j.mois)):'—')+'</td><td>'+(j.local||'Complexe')+'</td><td>'+(j.bail||'')+'</td><td>'+esc(b?nomBail(b):'')+'</td><td>'+esc(libOp(j))+(j.commentaire&&j.type!=='Autre dépense'?'<div class="muet" style="font-size:12.5px">'+esc(j.commentaire)+'</div>':'')+'</td><td class="d'+(s<0?' neg':s===0?' muet':'')+'">'+(s<0?'− ':'')+mont(j.montant,j.devise)+'</td><td class="d'+(s<0?' neg':s===0?' muet':'')+'">'+usd(j.usd)+'</td><td>'+esc(j.mode||'')+(j.reference?'<div class="muet" style="font-size:12.5px">'+esc(j.reference)+'</div>':'')+'</td><td>'+(j.recu&&!j._attente?'<a href="#" onclick="event.stopPropagation();ouvrirRecu([\''+j.id+'\']);return false">'+j.recu+'</a>':'')+'</td></tr>';});
   });
   h+='<tr class="tot"><td colspan="6">Total : recettes '+usd(tR)+' · dépenses '+usd(tD)+(tN?' · reste à encaisser '+usd(tN):'')+'</td><td class="d" colspan="2">Net '+usd(tR-tD)+'</td><td colspan="2"></td></tr></tbody></table></div>';
+  return h;
+}
+/** Téléphone : une ligne par opération (date, local, opération, montant). */
+function tableauOpsTel(liste,g){
+  var tR=0,tD=0,tN=0,groupes=[],idx={},h='<div class="tab-wrap"><table class="t rel"><thead><tr><th>Date</th><th>Local</th><th>Opération</th><th class="d">Montant</th></tr></thead><tbody>';
+  liste.forEach(function(j){var k=cleGroupe(j,g);if(idx[k[0]]===undefined){idx[k[0]]=groupes.length;groupes.push({k:k[0],lib:k[1],l:[]})}groupes[idx[k[0]]].l.push(j)});
+  if(g==='local'||g==='bail'||g==='type')groupes.sort(function(a,b){return String(a.k).localeCompare(String(b.k))});
+  groupes.forEach(function(G){
+    var r=0,d=0,n=0;G.l.forEach(function(j){if(j.virtuel){n+=j.usd;return;}var s=(TYPES[j.type]||{}).sens;if(s>0)r+=j.usd;if(s<0)d+=j.usd});tR+=r;tD+=d;tN+=n;
+    if(g)h+='<tr class="grp"><td colspan="4"><b>'+esc(G.lib)+'</b> <span class="sub">'+(r?' · <span class="nw">+ '+usd(r)+'</span>':'')+(d?' · <span class="nw">− '+usd(d)+'</span>':'')+(n?' · <span class="nw">reste '+usd(n)+'</span>':'')+'</span></td></tr>';
+    var zi=0;
+    G.l.forEach(function(j){var b=bail(j.bail);
+      if(j.virtuel){h+='<tr class="cliq nonpaye" onclick="payerRapide(\''+j.bail+'\',\''+mk(j.mois)+'\',\''+j.virtuel+'\',\''+(j.cle||'')+'\')"><td><span class="pastille p-ko">Dû</span></td><td><b>'+(j.local||'—')+'</b></td><td class="neg"><div class="ell">'+esc(j.type==='Loyer non payé'?'Loyer '+MOISC[+mk(j.mois).slice(5,7)-1]+' non payé':j.type)+'</div></td><td class="d neg">'+usd(j.usd)+'</td></tr>';return;}
+      var s=(TYPES[j.type]||{}).sens;
+      h+='<tr class="cliq'+(zi++%2?' z':'')+'" onclick="'+(estCommune(j)?'ouvrirFacture':'editerOp')+'(\''+j.id+'\')"><td>'+fd(j.date).slice(0,5)+attenteIco(j)+'</td><td><b>'+(j.local||'—')+'</b></td><td><div class="ell">'+esc(libOp(j))+'</div></td><td class="d'+(s<0?' neg':s===0?' muet':'')+'">'+(s<0?'− ':'')+usd(j.usd)+'</td></tr>';});
+  });
+  h+='<tr class="tot"><td colspan="4">Recettes '+usd(tR)+' · dépenses '+usd(tD)+(tN?' · à encaisser '+usd(tN):'')+'<br>Net '+usd(tR-tD)+'</td></tr></tbody></table></div>';
   return h;
 }
 /** Encaisser sur place un loyer ou une part de facture non payés. */
@@ -1570,8 +1721,9 @@ function relTete(cols){return '<div class="rel-tete">'+cols.map(function(c){retu
 function relSous(R,bs){if(R.annee!=='tout')return 'Année '+R.annee;var d=debutSuivi(bs);return d?'Suivi depuis le '+fd(d):'Depuis le début du suivi';}
 VUES.releves=function(){
   var R=V.rel;DET_N=0;
-  var h=entete('Relevés','Une ligne par mois : ce qui était dû, ce qui a été payé, ce qui reste. Touche « Payé en 2 fois » pour voir le détail.','<button class="btn prim" onclick="var d=document.getElementById(\'docReleve\');if(d)imprimer(d.innerHTML)">'+ico('imprimer')+'Imprimer</button>');
-  h+='<div class="filtres"><div class="onglets">'+[['bail','Par locataire'],['local','Par local'],['mois','Par mois']].map(function(x){return '<button class="'+(R.mode===x[0]?'on':'')+'" onclick="V.rel.mode=\''+x[0]+'\';rendre()">'+x[1]+'</button>'}).join('')+'</div>';
+  var h=entete('Relevés','Une ligne par mois : ce qui était dû, ce qui a été payé, ce qui reste.');
+  h+='<div class="barre-outils" style="margin-bottom:12px"><div class="onglets">'+[['bail','Par locataire','Locataire'],['local','Par local','Local'],['mois','Par mois','Mois']].map(function(x){return '<button class="'+(R.mode===x[0]?'on':'')+'" onclick="V.rel.mode=\''+x[0]+'\';rendre()"><span class="long">'+x[1]+'</span><span class="court">'+x[2]+'</span></button>'}).join('')+'</div>'+btnDoc('var d=document.getElementById(\'docReleve\');if(d)imprimer(d.innerHTML)',true)+'</div>';
+  h+='<div class="filtres">';
   if(R.mode==='bail')h+='<div class="filtre">Locataire<select onchange="V.rel.bail=this.value;rendre()"><option value="">Choisir…</option>'+optsBaux(R.bail)+'</select></div>';
   if(R.mode==='local')h+='<div class="filtre">Local<select onchange="V.rel.local=this.value;rendre()">'+optsLocaux(R.local,'Choisir…')+'</select></div>';
   if(R.mode==='mois'){var mm=R.mois||addM(mk(TODAY()),-1);h+='<div class="filtre">Mois<input type="month" value="'+mm+'" onchange="V.rel.mois=this.value;rendre()"></div>';}
@@ -1601,11 +1753,12 @@ VUES.releves=function(){
   } else {
     var m=R.mois||addM(mk(TODAY()),-1),RM=resumeMois(m),tD=RM.attendu,tP=RM.recu,factM=FC.filter(function(F){return F.m===m});
     doc=docTete('Situation des loyers','Loyers de '+mLib(m)+' — payables le '+(P.jourDefaut||5)+' '+MOIS[+addM(m,1).slice(5)-1])+
-      '<div class="tab-wrap"><table class="t"><thead><tr><th>Local</th><th>Bail</th><th>Locataire</th><th class="d">Dû</th><th class="d">Payé</th><th class="d">Reste</th><th>Payé le</th><th>Statut</th>'+(factM.length?'<th>Part SNEL / Regideso</th>':'')+'</tr></thead><tbody>'+
+      '<div class="tab-wrap"><table class="t rel parmois"><thead><tr><th>Local</th><th class="x-mob">Bail</th><th>Locataire</th><th class="d">Dû</th><th class="d x-mob">Payé</th><th class="d">Reste</th><th class="x-mob">Payé le</th><th>Statut</th>'+(factM.length?'<th class="x-mob">Part SNEL / Regideso</th>':'')+'</tr></thead><tbody>'+
       RM.lignes.map(function(r,i){var l=r.l,pt=factM.length?ST[r.b.id].parts.filter(function(x){return x.m===m}):[];
-        return '<tr class="'+(i%2?'z':'')+'"><td><b>'+r.b.local+'</b></td><td>'+r.b.id+'</td><td>'+esc(nomBail(r.b))+'</td><td class="d">'+usd(l.du)+'</td><td class="d">'+usd(l.paye)+'</td><td class="d'+(l.reste>0?' neg':'')+'">'+usd(l.reste)+'</td><td>'+(r.pj.map(function(j){return fd(j.date)}).join(', ')||'—')+'</td><td>'+pastilleMois(l)+'</td>'+(factM.length?'<td>'+(pt.map(function(x){return x.nature+' '+pastilleMois({statut:x.statut})}).join(' ')||'—')+'</td>':'')+'</tr>'}).join('')+
+        return '<tr class="'+(i%2?'z':'')+'"><td><b>'+r.b.local+'</b></td><td class="x-mob">'+r.b.id+'</td><td><div class="ell">'+esc(nomBail(r.b))+'</div></td><td class="d">'+usd(l.du)+'</td><td class="d x-mob">'+usd(l.paye)+'</td><td class="d'+(l.reste>0?' neg':'')+'">'+usd(l.reste)+'</td><td class="x-mob">'+(r.pj.map(function(j){return fd(j.date)}).join(', ')||'—')+'</td><td>'+pastilleMois(l)+'</td>'+(factM.length?'<td class="x-mob">'+(pt.map(function(x){return x.nature+' '+pastilleMois({statut:x.statut})}).join(' ')||'—')+'</td>':'')+'</tr>'}).join('')+
       (RM.lignes.length?'':'<tr><td colspan="9" class="vide">Aucun loyer dû pour ce mois.</td></tr>')+
-      '<tr class="tot"><td colspan="3">Total</td><td class="d">'+usd(tD)+'</td><td class="d">'+usd(tP)+'</td><td class="d">'+usd(tD-tP)+'</td><td colspan="'+(factM.length?3:2)+'">'+(tD?Math.round(tP/tD*100)+' % encaissé':'')+'</td></tr></tbody></table></div>'+docPied();
+      '</tbody></table></div><div class="rel-totaux"><div><span>Total attendu ('+mLib(m)+')</span><b>'+usd(tD)+'</b></div><div><span>Total reçu'+(tD?' · '+Math.round(tP/tD*100)+' %':'')+'</span><b>'+usd(tP)+'</b></div>'+
+      (tD-tP>0.009?'<div class="reste"><span>Reste dû</span><b>'+usd(tD-tP)+'</b></div>':'<div class="reste ajour"><span>Reste dû</span><b>0 $ · tout est payé</b></div>')+'</div>'+docPied();
   }
   return h+'<div class="doc" id="docReleve">'+doc+'</div>';
 };
@@ -1808,12 +1961,76 @@ function partagerRecus(){
    Impression, fenêtres, messages, tri, tableaux sur téléphone
    ========================================================= */
 function imprimer(html,brut){
+  if(!brut&&estTel())return partagerPdf(html);
   var z=document.getElementById('impression');z.innerHTML=brut?html:'<div class="doc">'+html+'</div>';
   document.body.classList.add('imprime');
   var imgs=[].slice.call(z.querySelectorAll('img')).map(function(i){return i.complete?Promise.resolve():new Promise(function(r){i.onload=i.onerror=r})});
   Promise.all(imgs).then(function(){setTimeout(function(){window.print();setTimeout(function(){document.body.classList.remove('imprime')},300)},60)});
 }
-function imprimerOps(){imprimer(docTete('Liste des opérations',fd(TODAY()))+document.getElementById('zoneOps').innerHTML+docPied())}
+/* ---------- PDF (téléphone) : même mise en page que l'impression, puis Partager (WhatsApp, mail…) ---------- */
+var LIBS_PDF=APPLI_INSTALLEE?['lib/html2canvas-pro.min.js','lib/jspdf.umd.min.js']:['https://cdn.jsdelivr.net/npm/html2canvas-pro@1.5.8/dist/html2canvas-pro.min.js','https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js'];
+function chargerScript(src){return new Promise(function(ok,ko){if(document.querySelector('script[src="'+src+'"]'))return ok();var s=document.createElement('script');s.src=src;s.onload=ok;s.onerror=function(){ko(new Error('Impossible de charger '+src))};document.head.appendChild(s);});}
+function nomPdf(html){var m=/<div class="titre"><b>([^<]+)<\/b>/.exec(html),t=m?m[1]:'Document';t=t.replace(/[\/\\:*?"<>|]/g,'-');try{t=t.normalize('NFD').replace(/[\u0300-\u036f]/g,'')}catch(e){}return 'Anziama - '+t+' - '+fd(TODAY()).replace(/\//g,'-')+'.pdf';}
+function partagerPdf(html){
+  occupe(true,'Préparation du PDF…');
+  var ifr=document.createElement('iframe');ifr.setAttribute('aria-hidden','true');ifr.style.cssText='position:fixed;left:-10000px;top:0;width:900px;height:1400px;border:0;visibility:hidden';
+  var css=[].slice.call(document.querySelectorAll('style')).map(function(x){return x.textContent}).join('\n').replace(/@media print\s*\{/g,'@media all{');
+  var polices=document.getElementById('polices');
+  ifr.srcdoc='<!DOCTYPE html><html style="'+esc(document.documentElement.getAttribute('style')||'')+'"><head><meta charset="utf-8">'+(polices?'<link rel="stylesheet" href="'+esc(polices.href)+'">':'')+'<style>'+css+'</style><style>body{background:#fff!important;margin:0}#pdfPage{width:718px;padding:0!important}</style></head><body class="imprime"><div class="doc" id="pdfPage">'+html+'</div></body></html>';
+  document.body.appendChild(ifr);
+  var fin=function(){occupe(false);setTimeout(function(){ifr.remove()},100)};
+  return Promise.all(LIBS_PDF.map(chargerScript)).then(function(){
+    return new Promise(function(ok){ifr.onload=ok;if(ifr.contentDocument&&ifr.contentDocument.readyState==='complete'&&ifr.contentDocument.getElementById('pdfPage'))ok();});
+  }).then(function(){
+    var d=ifr.contentDocument,pg=d.getElementById('pdfPage');
+    var imgs=[].slice.call(d.images).map(function(i){return i.complete?0:new Promise(function(r){i.onload=i.onerror=r})});
+    return Promise.all(imgs.concat([d.fonts?d.fonts.ready:0])).then(function(){return new Promise(function(r){setTimeout(r,150)})}).then(function(){
+      var top=pg.getBoundingClientRect().top,H=pg.scrollHeight,coupes=[];
+      [].slice.call(pg.querySelectorAll('tr,h3,.rel-tete,.rel-totaux>div,.doc-pied,.calcul .l,.mouvements>div,.alerte,.doc-info,.doc-tete,p')).forEach(function(e){var b=e.getBoundingClientRect();if(b.height)coupes.push(Math.round(b.bottom-top));});
+      var echelle=Math.min(2,Math.sqrt(15e6/(718*H)));
+      return html2canvas(pg,{scale:echelle,backgroundColor:'#ffffff',windowWidth:900,useCORS:true,logging:false}).then(function(cv){return {cv:cv,H:H,coupes:coupes.sort(function(a,b){return a-b}),k:cv.width/718};});
+    });
+  }).then(function(r){
+    var pdf=new window.jspdf.jsPDF({unit:'mm',format:'a4'}),lm=12,lw=186,pageH=Math.floor(718*273/186),debut=0,n=0;
+    while(debut<r.H-2){var lim=debut+pageH,fin2=r.H;
+      if(r.H>lim){fin2=lim;for(var i=r.coupes.length-1;i>=0;i--){if(r.coupes[i]<=lim&&r.coupes[i]>debut+pageH*0.4){fin2=r.coupes[i];break;}}}
+      var c=document.createElement('canvas'),hpx=Math.round((fin2-debut)*r.k);c.width=r.cv.width;c.height=hpx;
+      var x=c.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,c.width,c.height);x.drawImage(r.cv,0,Math.round(debut*r.k),c.width,hpx,0,0,c.width,hpx);
+      if(n++)pdf.addPage();
+      pdf.addImage(c.toDataURL('image/jpeg',0.92),'JPEG',lm,12,lw,lw*(fin2-debut)/718);
+      pdf.setFontSize(8);pdf.setTextColor(130);pdf.text(n+'',210-lm,290,{align:'right'});
+      debut=fin2;}
+    var nom=nomPdf(html),blob=pdf.output('blob');fin();
+    var fichier=null;try{fichier=new File([blob],nom,{type:'application/pdf'})}catch(e){}
+    var envoyer=function(){
+      if(fichier&&navigator.canShare&&navigator.canShare({files:[fichier]}))return navigator.share({files:[fichier],title:nom}).catch(function(e){if(e&&e.name==='NotAllowedError')proposerPdf(fichier,blob,nom);});
+      telechargerPdf(blob,nom);
+    };
+    PDF_PRET={f:fichier,b:blob,n:nom};
+    try{envoyer()}catch(e){proposerPdf(fichier,blob,nom)}
+  }).catch(function(e){fin();toast('Le PDF n\'a pas pu être préparé : '+(e.message||e),1);});
+}
+var PDF_PRET=null;
+function telechargerPdf(blob,nom){var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=nom;document.body.appendChild(a);a.click();setTimeout(function(){URL.revokeObjectURL(a.href);a.remove()},4000);}
+function proposerPdf(f,b,nom){fenetre('PDF prêt','<p style="margin:0">'+esc(nom)+'</p>','<button class="btn" onclick="fermer();telechargerPdf(PDF_PRET.b,PDF_PRET.n)">Enregistrer</button><button class="btn prim" onclick="fermer();navigator.share({files:[PDF_PRET.f],title:PDF_PRET.n}).catch(function(){})">'+ico('partager')+'Partager</button>');}
+function imprimerOps(){imprimer(docTete('Liste des opérations',fd(TODAY()))+tableauOpsImp(V._opsListe||[],V.ops.groupe)+docPied())}
+/** Impression / PDF : une ligne par opération, sans retour à la ligne. */
+function tableauOpsImp(liste,g){
+  var tR=0,tD=0,tN=0,groupes=[],idx={},h='<div class="tab-wrap"><table class="t rel"><thead><tr><th>Date</th><th>Mois</th><th>Local</th><th>Locataire</th><th>Opération</th><th class="d">Montant</th><th>Reçu</th></tr></thead><tbody>';
+  liste.forEach(function(j){var k=cleGroupe(j,g);if(idx[k[0]]===undefined){idx[k[0]]=groupes.length;groupes.push({k:k[0],lib:k[1],l:[]})}groupes[idx[k[0]]].l.push(j)});
+  if(g==='local'||g==='bail'||g==='type')groupes.sort(function(a,b){return String(a.k).localeCompare(String(b.k))});
+  groupes.forEach(function(G){
+    var r=0,d=0,n=0;G.l.forEach(function(j){if(j.virtuel){n+=j.usd;return;}var s=(TYPES[j.type]||{}).sens;if(s>0)r+=j.usd;if(s<0)d+=j.usd});tR+=r;tD+=d;tN+=n;
+    if(g)h+='<tr class="grp"><td colspan="7">'+esc(G.lib)+' <span class="sub">'+(r?' · recettes '+usd(r):'')+(d?' · dépenses '+usd(d):'')+(n?' · reste à encaisser '+usd(n):'')+'</span></td></tr>';
+    var zi=0;
+    G.l.forEach(function(j){var b=bail(j.bail),mo=j.mois?mk(j.mois):'',mc=mo?MOISC[+mo.slice(5,7)-1]+' '+mo.slice(2,4):'—';
+      if(j.virtuel){h+='<tr class="nonpaye"><td><span class="pastille p-ko">Non payé</span></td><td>'+mc+'</td><td><b>'+(j.local||'—')+'</b></td><td><div class="ell" style="max-width:150px">'+esc(b?nomBail(b):'')+'</div></td><td class="neg">'+esc(j.type)+'</td><td class="d neg">'+usd(j.usd)+'</td><td></td></tr>';return;}
+      var s=(TYPES[j.type]||{}).sens;
+      h+='<tr class="'+(zi++%2?'z':'')+'"><td>'+fd(j.date)+'</td><td>'+mc+'</td><td><b>'+(j.local||'—')+'</b></td><td><div class="ell" style="max-width:150px">'+esc(b?nomBail(b):'')+'</div></td><td><div class="ell" style="max-width:190px">'+esc(libOp(j))+'</div></td><td class="d'+(s<0?' neg':s===0?' muet':'')+'">'+(s<0?'− ':'')+usd(j.usd)+'</td><td>'+(j.recu||'')+'</td></tr>';});
+  });
+  h+='<tr class="tot"><td colspan="7">Recettes '+usd(tR)+' · dépenses '+usd(tD)+' · net '+usd(tR-tD)+(tN?' · reste à encaisser '+usd(tN):'')+'</td></tr></tbody></table></div>';
+  return h;
+}
 function fenetre(titre,corps,pieds,large){
   document.getElementById('couche').innerHTML='<div class="voile" onclick="if(event.target===this)fermer()"><div class="fenetre'+(large?' large':'')+'" role="dialog" aria-modal="true"><div class="tete"><h2>'+titre+'</h2><button class="x" onclick="fermer()" aria-label="Fermer">×</button></div><div class="corps">'+corps+'</div>'+(pieds?'<div class="pieds">'+pieds+'</div>':'')+'</div></div>';
   if(window.innerWidth>860){var p=document.querySelector('.fenetre input:not([readonly]):not([type=checkbox]),.fenetre select');if(p)try{p.focus({preventScroll:true})}catch(e){}}
